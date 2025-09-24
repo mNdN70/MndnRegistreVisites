@@ -51,7 +51,7 @@ export const useVisits = () => {
     fetchVisits();
   }, [fetchVisits]);
 
-  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
+  const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
@@ -114,9 +114,9 @@ export const useVisits = () => {
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
        return { success: false, message: 'No se pudo registrar la entrada.' };
     }
-  }, [toast, t]);
+  };
 
-  const registerExit = useCallback(async (dni: string) => {
+  const registerExit = async (dni: string) => {
     const q = query(
       collection(db, VISITS_COLLECTION),
       where('id', '==', dni.toLowerCase()),
@@ -155,7 +155,7 @@ export const useVisits = () => {
       toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
       return { success: false, message: 'No se pudo registrar la salida.'};
     }
-  }, [toast, t]);
+  };
 
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
@@ -214,7 +214,7 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [toast, t]);
+  }, [createCSV]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
