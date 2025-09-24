@@ -37,9 +37,9 @@ export default function ExitForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = registerExit(values.id);
+    const result = await registerExit(values.id);
     if (result.success) {
       form.reset();
       setTimeout(() => router.push("/"), 2000);

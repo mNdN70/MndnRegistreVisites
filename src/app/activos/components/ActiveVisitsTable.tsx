@@ -61,7 +61,7 @@ export default function ActiveVisitsTable() {
             </TableHeader>
             <TableBody>
               {activeVisits.map((visit) => (
-                <TableRow key={visit.id + visit.entryTime}>
+                <TableRow key={visit.docId}>
                   <TableCell className="font-medium">{visit.name}</TableCell>
                   <TableCell className="hidden md:table-cell">{visit.company}</TableCell>
                   <TableCell>

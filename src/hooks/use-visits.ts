@@ -3,10 +3,21 @@
 import type { AnyVisit } from '@/lib/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
-import { isToday } from 'date-fns';
 import { useTranslation } from './use-translation';
+import { db } from '@/lib/firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit,
+  updateDoc,
+  doc
+} from 'firebase/firestore';
 
-const VISITS_STORAGE_KEY = 'menadiona-visits';
+const VISITS_COLLECTION = 'visits';
 
 export const useVisits = () => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);
@@ -14,15 +25,18 @@ export const useVisits = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-
-  useEffect(() => {
+  const fetchVisits = useCallback(async () => {
+    setLoading(true);
     try {
-      const storedVisits = window.localStorage.getItem(VISITS_STORAGE_KEY);
-      if (storedVisits) {
-        setVisits(JSON.parse(storedVisits));
-      }
+      const q = query(collection(db, VISITS_COLLECTION), orderBy('entryTime', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const visitsData = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        docId: doc.id, // Keep firestore doc id
+      })) as AnyVisit[];
+      setVisits(visitsData);
     } catch (error) {
-      console.error('Error reading from localStorage', error);
+      console.error('Error reading from Firestore', error);
       toast({
         title: 'Error',
         description: 'No se pudieron cargar los registros de visitas.',
@@ -33,26 +47,23 @@ export const useVisits = () => {
     }
   }, [toast]);
 
-  const updateVisits = useCallback((updatedVisits: AnyVisit[]) => {
-    setVisits(updatedVisits);
-    try {
-      window.localStorage.setItem(VISITS_STORAGE_KEY, JSON.stringify(updatedVisits));
-    } catch (error) {
-      console.error('Error writing to localStorage', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar el registro.',
-        variant: 'destructive',
-      });
-    }
-  }, [toast]);
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
 
-  const findActiveVisitByDni = useCallback((dni: string) => {
-    return visits.find(v => v.id.toLowerCase() === dni.toLowerCase() && v.exitTime === null);
-  }, [visits]);
+  const findActiveVisitByDni = useCallback(async (dni: string) => {
+    const q = query(
+      collection(db, VISITS_COLLECTION),
+      where('id', '==', dni.toLowerCase()),
+      where('exitTime', '==', null),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  }, []);
 
-  const addVisit = useCallback((visit: Omit<AnyVisit, 'entryTime' | 'exitTime'>) => {
-    if (findActiveVisitByDni(visit.id)) {
+  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime'>) => {
+    if (await findActiveVisitByDni(visit.id)) {
       const errorMessage = t('duplicate_entry_detail');
       toast({
         title: t('duplicate_entry'),
@@ -61,48 +72,68 @@ export const useVisits = () => {
       });
       return { success: false, message: errorMessage };
     }
-    const newVisit: AnyVisit = {
-      ...visit,
-      entryTime: new Date().toISOString(),
-      exitTime: null,
-    };
-    updateVisits([newVisit, ...visits]);
-    toast({
-      title: t('entry_registered'),
-      description: t('entry_registered_detail').replace('{name}', visit.name),
-    });
-    return { success: true };
-  }, [visits, findActiveVisitByDni, updateVisits, toast, t]);
-
-  const registerExit = useCallback((dni: string) => {
-    const visitIndex = visits.findIndex(v => 
-      v.id.toLowerCase() === dni.toLowerCase() && 
-      v.exitTime === null &&
-      isToday(new Date(v.entryTime))
-    );
-
-    if (visitIndex === -1) {
-      const errorMessage = t('no_active_visit_today');
+    try {
+      const newVisit: Omit<AnyVisit, 'docId'> = {
+        ...visit,
+        id: visit.id.toLowerCase(),
+        entryTime: new Date().toISOString(),
+        exitTime: null,
+      };
+      await addDoc(collection(db, VISITS_COLLECTION), newVisit);
+      fetchVisits(); // Refresh data
       toast({
-        title: t('exit_registration_error'),
-        description: errorMessage,
-        variant: 'destructive',
+        title: t('entry_registered'),
+        description: t('entry_registered_detail').replace('{name}', visit.name),
       });
-      return { success: false, message: errorMessage };
+      return { success: true };
+    } catch (error) {
+       toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
+       return { success: false };
     }
+  }, [findActiveVisitByDni, toast, t, fetchVisits]);
 
-    const updatedVisits = [...visits];
-    const visit = updatedVisits[visitIndex];
-    updatedVisits[visitIndex] = { ...visit, exitTime: new Date().toISOString() };
+  const registerExit = useCallback(async (dni: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const q = query(
+      collection(db, VISITS_COLLECTION),
+      where('id', '==', dni.toLowerCase()),
+      where('exitTime', '==', null),
+      where('entryTime', '>=', today.toISOString()),
+      orderBy('entryTime', 'desc'),
+      limit(1)
+    );
     
-    updateVisits(updatedVisits);
+    try {
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        const errorMessage = t('no_active_visit_today');
+        toast({
+          title: t('exit_registration_error'),
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return { success: false, message: errorMessage };
+      }
 
-    toast({
-      title: t('exit_registered'),
-      description: t('exit_registered_detail').replace('{name}', visit.name),
-    });
-    return { success: true };
-  }, [visits, updateVisits, toast, t]);
+      const visitDoc = querySnapshot.docs[0];
+      await updateDoc(doc(db, VISITS_COLLECTION, visitDoc.id), {
+        exitTime: new Date().toISOString(),
+      });
+      
+      fetchVisits(); // Refresh data
+
+      toast({
+        title: t('exit_registered'),
+        description: t('exit_registered_detail').replace('{name}', visitDoc.data().name),
+      });
+      return { success: true };
+    } catch(error) {
+      toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
+      return { success: false };
+    }
+  }, [toast, t, fetchVisits]);
 
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
@@ -165,7 +196,7 @@ export const useVisits = () => {
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
-  }, [getActiveVisits, toast, t]);
+  }, [getActiveVisits, toast, t, createCSV]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV };

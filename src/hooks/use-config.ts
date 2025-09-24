@@ -4,11 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from '@/lib/constants';
 import { useTranslation } from './use-translation';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  getDocs,
+  writeBatch,
+  doc,
+  addDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocsFromServer,
+  orderBy
+} from 'firebase/firestore';
 
-const DEPARTMENTS_STORAGE_KEY = 'menadiona-departments';
-const EMPLOYEES_STORAGE_KEY = 'menadiona-employees';
+const DEPARTMENTS_COLLECTION = 'departments';
+const EMPLOYEES_COLLECTION = 'employees';
 
 export interface Employee {
+  id?: string;
   name: string;
   department: string;
 }
@@ -19,100 +33,135 @@ export const useConfig = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
+  
+  const seedInitialData = useCallback(async () => {
+    const batch = writeBatch(db);
+    
+    const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION));
+    const departmentsSnapshot = await getDocsFromServer(departmentsQuery);
+    if (departmentsSnapshot.empty) {
+      INITIAL_DEPARTMENTS.forEach(dept => {
+        const docRef = doc(collection(db, DEPARTMENTS_COLLECTION));
+        batch.set(docRef, { name: dept });
+      });
+    }
 
-  useEffect(() => {
+    const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION));
+    const employeesSnapshot = await getDocsFromServer(employeesQuery);
+    if (employeesSnapshot.empty) {
+      INITIAL_EMPLOYEES.forEach(emp => {
+        const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
+        batch.set(docRef, emp);
+      });
+    }
+
+    await batch.commit();
+
+  }, []);
+
+
+  const fetchConfig = useCallback(async () => {
+    setLoading(true);
     try {
-      const storedDepartments = window.localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
-      if (storedDepartments) {
-        setDepartments(JSON.parse(storedDepartments));
-      } else {
-        setDepartments(INITIAL_DEPARTMENTS);
-        window.localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(INITIAL_DEPARTMENTS));
-      }
+        const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
+        const departmentsSnapshot = await getDocs(departmentsQuery);
+        if (departmentsSnapshot.empty) {
+             await seedInitialData();
+             const newDepartmentsSnapshot = await getDocs(departmentsQuery);
+             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
 
-      const storedEmployees = window.localStorage.getItem(EMPLOYEES_STORAGE_KEY);
-      if (storedEmployees) {
-        setEmployees(JSON.parse(storedEmployees));
-      } else {
-        setEmployees(INITIAL_EMPLOYEES);
-        window.localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(INITIAL_EMPLOYEES));
-      }
+             const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
+             const newEmployeesSnapshot = await getDocs(employeesQuery);
+             setEmployees(newEmployeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+
+        } else {
+            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
+            const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
+            const employeesSnapshot = await getDocs(employeesQuery);
+            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+        }
     } catch (error) {
-      console.error('Error reading from localStorage', error);
+      console.error('Error fetching config from Firestore', error);
       toast({
         title: 'Error',
-        description: 'No se pudo cargar la configuración.',
+        description: 'No se pudo cargar la configuración desde la base de datos.',
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, seedInitialData]);
 
-  const updateDepartments = useCallback((updatedDepartments: string[]) => {
-    setDepartments(updatedDepartments);
-    try {
-      window.localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(updatedDepartments));
-    } catch (error) {
-      console.error('Error writing to localStorage', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar la configuración de departamentos.',
-        variant: 'destructive',
-      });
-    }
-  }, [toast]);
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
-  const updateEmployees = useCallback((updatedEmployees: Employee[]) => {
-    setEmployees(updatedEmployees);
-    try {
-      window.localStorage.setItem(EMPLOYEES_STORAGE_KEY, JSON.stringify(updatedEmployees));
-    } catch (error) {
-      console.error('Error writing to localStorage', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar la configuración de empleados.',
-        variant: 'destructive',
-      });
-    }
-  }, [toast]);
-  
-  const addDepartment = useCallback((department: string, quiet = false) => {
+  const addDepartment = useCallback(async (department: string) => {
     if (departments.find(d => d.toLowerCase() === department.toLowerCase())) {
-      if (!quiet) toast({ title: t('duplicated_department'), variant: 'destructive' });
+      toast({ title: t('duplicated_department'), variant: 'destructive' });
       return;
     }
-    const newDepartments = [...departments, department].sort();
-    updateDepartments(newDepartments);
-    if (!quiet) toast({ title: t('department_added') });
-  }, [departments, updateDepartments, toast, t]);
+    try {
+      await addDoc(collection(db, DEPARTMENTS_COLLECTION), { name: department });
+      setDepartments(prev => [...prev, department].sort());
+      toast({ title: t('department_added') });
+    } catch (error) {
+       toast({ title: 'Error', description: 'No se pudo añadir el departamento.', variant: 'destructive' });
+    }
+  }, [departments, toast, t]);
 
-  const removeDepartment = useCallback((department: string, quiet = false) => {
-    const newDepartments = departments.filter(d => d !== department);
-    updateDepartments(newDepartments);
+  const removeDepartment = useCallback(async (department: string) => {
+    const batch = writeBatch(db);
+    try {
+      const deptQuery = query(collection(db, DEPARTMENTS_COLLECTION), where('name', '==', department));
+      const deptSnapshot = await getDocs(deptQuery);
+      deptSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
 
-    const newEmployees = employees.filter(e => e.department !== department);
-    updateEmployees(newEmployees);
+      const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
+      const empSnapshot = await getDocs(empQuery);
+      empSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
 
-    if (!quiet) toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
-  }, [departments, employees, updateDepartments, updateEmployees, toast, t]);
+      setDepartments(prev => prev.filter(d => d !== department));
+      setEmployees(prev => prev.filter(e => e.department !== department));
+      
+      toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+    } catch(error) {
+      toast({ title: 'Error', description: 'No se pudo eliminar el departamento.', variant: 'destructive' });
+    }
+  }, [toast, t]);
 
 
-  const addEmployee = useCallback((employee: Employee) => {
+  const addEmployee = useCallback(async (employee: Omit<Employee, 'id'>) => {
      if (employees.find(e => e.name.toLowerCase() === employee.name.toLowerCase())) {
       toast({ title: t('duplicated_employee'), variant: 'destructive' });
       return;
     }
-    const newEmployees = [...employees, employee].sort((a,b) => a.name.localeCompare(b.name));
-    updateEmployees(newEmployees);
-    toast({ title: t('employee_added') });
-  }, [employees, updateEmployees, toast, t]);
+    try {
+      const docRef = await addDoc(collection(db, EMPLOYEES_COLLECTION), employee);
+      setEmployees(prev => [...prev, {id: docRef.id, ...employee}].sort((a,b) => a.name.localeCompare(b.name)));
+      toast({ title: t('employee_added') });
+    } catch (error) {
+       toast({ title: 'Error', description: 'No se pudo añadir el empleado.', variant: 'destructive' });
+    }
+  }, [employees, toast, t]);
 
-  const removeEmployee = useCallback((employeeName: string) => {
-    const newEmployees = employees.filter(e => e.name !== employeeName);
-    updateEmployees(newEmployees);
-    toast({ title: t('employee_deleted') });
-  }, [employees, updateEmployees, toast, t]);
+  const removeEmployee = useCallback(async (employeeName: string) => {
+    const employeeToRemove = employees.find(e => e.name === employeeName);
+    if (!employeeToRemove || !employeeToRemove.id) return;
+    try {
+      await deleteDoc(doc(db, EMPLOYEES_COLLECTION, employeeToRemove.id));
+      setEmployees(prev => prev.filter(e => e.name !== employeeName));
+      toast({ title: t('employee_deleted') });
+    } catch (error) {
+       toast({ title: 'Error', description: 'No se pudo eliminar el empleado.', variant: 'destructive' });
+    }
+  }, [employees, toast, t]);
 
 
   return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee };

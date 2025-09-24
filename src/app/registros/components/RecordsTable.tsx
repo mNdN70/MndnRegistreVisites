@@ -128,7 +128,7 @@ export default function RecordsTable() {
             </TableHeader>
             <TableBody>
               {filteredVisits.map((visit) => (
-                <TableRow key={visit.id + visit.entryTime}>
+                <TableRow key={visit.docId}>
                   <TableCell className="font-medium">{visit.name}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{visit.id}</TableCell>
                   <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: locales[language] })}</TableCell>
@@ -142,7 +142,7 @@ export default function RecordsTable() {
                     {visit.exitTime ? (
                       <Badge variant="outline">{t('finished')}</Badge>
                     ) : (
-                      <Badge variant="default" className="bg-green-600">{t('active')}</Badge>
+                      <Badge variant="default" className="bg-primary">{t('active')}</Badge>
                     )}
                   </TableCell>
                 </TableRow>

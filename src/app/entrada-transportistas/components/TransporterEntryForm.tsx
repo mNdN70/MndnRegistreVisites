@@ -104,9 +104,9 @@ export default function TransporterEntryForm() {
     return () => { isMounted = false; };
   }, [privacyPolicyAccepted]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = addVisit({ ...values, type: 'transporter' });
+    const result = await addVisit({ ...values, type: 'transporter' });
     if (result.success) {
       form.reset();
       setTimeout(() => router.push("/"), 2000);

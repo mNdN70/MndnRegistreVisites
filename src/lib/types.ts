@@ -1,4 +1,5 @@
 export interface BaseVisit {
+  docId?: string; // Firestore document ID
   id: string; // DNI/NIE
   name: string;
   company: string;
