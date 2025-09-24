@@ -22,7 +22,7 @@ export function Header() {
     { href: "/", label: "Inici" },
     { href: "/activos", label: "Visites Actives" },
     { href: "/registros", label: "Consultar Registres" },
-    { href: "/configuracion/login", label: "Configuració" },
+    { href: "/configuracion/panel", label: "Configuració" },
   ];
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
@@ -62,13 +62,13 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setLanguage('ca')}>
-                Català
+                CAT
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('es')}>
-                Español
+                ESP
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('en')}>
-                English
+                ENG
                 </DropdownMenuItem>
             </DropdownMenuContent>
             </DropdownMenu>
