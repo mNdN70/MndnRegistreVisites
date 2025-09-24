@@ -281,10 +281,12 @@ export default function TransporterEntryForm() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle className="font-headline">{t('privacy_policy_title')}</AlertDialogTitle>
-                          <AlertDialogDescription className="text-foreground pt-4 space-y-2">
-                            <p>{t('privacy_policy_p1')}</p>
-                            <p>{t('privacy_policy_p2')}</p>
-                            <p>{t('privacy_policy_p3')}</p>
+                           <AlertDialogDescription asChild>
+                            <div className="text-foreground pt-4 space-y-2">
+                              <div>{t('privacy_policy_p1')}</div>
+                              <div>{t('privacy_policy_p2')}</div>
+                              <div>{t('privacy_policy_p3')}</div>
+                            </div>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
