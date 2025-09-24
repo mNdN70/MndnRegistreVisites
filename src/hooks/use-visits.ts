@@ -112,7 +112,7 @@ export const useVisits = () => {
     } catch (error) {
        console.error("Error adding visit:", error);
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
-       return { success: false };
+       return { success: false, message: 'No se pudo registrar la entrada.' };
     }
   }, [toast, t, fetchVisits]);
 
