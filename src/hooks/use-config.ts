@@ -115,5 +115,5 @@ export const useConfig = () => {
   }, [employees, updateEmployees, toast, t]);
 
 
-  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployees };
+  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee };
 };

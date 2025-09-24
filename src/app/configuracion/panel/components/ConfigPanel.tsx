@@ -1,11 +1,11 @@
 "use client";
 
-import { useConfig, Employee } from "@/hooks/use-config";
+import { useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, UserPlus, LogOut, FileUp, FileDown } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { Trash2, UserPlus, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function ConfigPanel() {
@@ -28,15 +27,13 @@ export default function ConfigPanel() {
     addEmployee,
     removeEmployee,
     loading,
-    updateEmployees,
   } = useConfig();
-  const { toast } = useToast();
+
   const { t } = useTranslation();
 
   const [newDepartment, setNewDepartment] = useState("");
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeeDept, setNewEmployeeDept] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem("config-auth") === "true";
@@ -74,52 +71,6 @@ export default function ConfigPanel() {
     router.push("/");
   };
   
-  const handleExport = () => {
-    const data = { employees, departments };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `menadiona-config-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({title: t("config_exported")});
-  };
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result;
-          if (typeof text === 'string') {
-            const data = JSON.parse(text);
-            if (data.employees && data.departments) {
-              updateEmployees(data.employees);
-              // This is a bit of a trick to update departments without exposing a full setter
-              // First, remove all existing departments
-              departments.forEach(d => removeDepartment(d, true)); // quiet mode
-              // Then add the new ones
-              data.departments.forEach((d:string) => addDepartment(d, true)); // quiet mode
-              toast({title: t("config_imported")});
-            } else {
-              throw new Error("Formato de archivo incorrecto");
-            }
-          }
-        } catch (error) {
-          toast({title: t("error_importing"), description: t("invalid_file"), variant: "destructive"});
-        }
-      };
-      reader.readAsText(file);
-    }
-    // Reset file input
-    if(fileInputRef.current) {
-        fileInputRef.current.value = "";
-    }
-  };
-
-
   return (
     <div className="space-y-8">
       <div className="grid md:grid-cols-2 gap-8">
@@ -189,12 +140,7 @@ export default function ConfigPanel() {
           </CardContent>
         </Card>
       </div>
-       <div className="flex justify-between items-center gap-4 mt-8">
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}><FileUp className="mr-2"/>{t('export')}</Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}><FileDown className="mr-2"/>{t('import')}</Button>
-          <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden"/>
-        </div>
+       <div className="flex justify-end items-center gap-4 mt-8">
         <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2" />{t('logout')}</Button>
       </div>
     </div>
