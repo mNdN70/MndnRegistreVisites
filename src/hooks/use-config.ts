@@ -14,7 +14,6 @@ import {
   deleteDoc,
   query,
   where,
-  getDocsFromServer,
   orderBy
 } from 'firebase/firestore';
 
@@ -38,7 +37,7 @@ export const useConfig = () => {
     const batch = writeBatch(db);
     
     const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION));
-    const departmentsSnapshot = await getDocsFromServer(departmentsQuery);
+    const departmentsSnapshot = await getDocs(departmentsQuery);
     if (departmentsSnapshot.empty) {
       INITIAL_DEPARTMENTS.forEach(dept => {
         const docRef = doc(collection(db, DEPARTMENTS_COLLECTION));
@@ -47,7 +46,7 @@ export const useConfig = () => {
     }
 
     const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION));
-    const employeesSnapshot = await getDocsFromServer(employeesQuery);
+    const employeesSnapshot = await getDocs(employeesQuery);
     if (employeesSnapshot.empty) {
       INITIAL_EMPLOYEES.forEach(emp => {
         const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
