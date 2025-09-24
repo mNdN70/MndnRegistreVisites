@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PageContainer } from "@/components/PageContainer";
-import { LogOut, Truck, User } from "lucide-react";
+import { LogOut, Settings, Truck, User } from "lucide-react";
 import Link from "next/link";
 
 const actionCards = [
@@ -22,6 +22,12 @@ const actionCards = [
     description: "Registrar la salida de un visitante.",
     icon: <LogOut className="h-12 w-12" />,
   },
+  {
+    href: "/configuracion/login",
+    title: "Configuración",
+    description: "Gestionar empleados y departamentos.",
+    icon: <Settings className="h-12 w-12" />,
+  },
 ];
 
 export default function Home() {
@@ -36,7 +42,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {actionCards.map((card) => (
           <Link href={card.href} key={card.title}>
             <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl">

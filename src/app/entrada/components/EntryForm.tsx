@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useVisits } from "@/hooks/use-visits";
-import { DEPARTMENTS, EMPLOYEES } from "@/lib/constants";
+import { useConfig } from "@/hooks/use-config";
 import { useState, useEffect } from "react";
 import { enableEntryButton } from "@/ai/flows/enable-entry-button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
@@ -44,6 +44,7 @@ const formSchema = z.object({
 export default function EntryForm() {
   const router = useRouter();
   const { addVisit } = useVisits();
+  const { employees, departments, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
@@ -147,14 +148,14 @@ export default function EntryForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Persona a visitar</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={configLoading}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione una persona" />
+                        <SelectValue placeholder={configLoading ? "Cargando..." : "Seleccione una persona"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {EMPLOYEES.map((employee) => (
+                      {employees.map((employee) => (
                         <SelectItem key={employee.name} value={employee.name}>
                           {employee.name}
                         </SelectItem>
@@ -171,14 +172,14 @@ export default function EntryForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Departamento</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={configLoading}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione un departamento" />
+                        <SelectValue placeholder={configLoading ? "Cargando..." : "Seleccione un departamento"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {DEPARTMENTS.map((department) => (
+                      {departments.map((department) => (
                         <SelectItem key={department} value={department}>
                           {department}
                         </SelectItem>

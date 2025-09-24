@@ -1,4 +1,5 @@
-export const EMPLOYEES = [
+
+export const INITIAL_EMPLOYEES = [
   { name: 'Ana García', department: 'Recursos Humanos' },
   { name: 'Luis Pérez', department: 'Producción' },
   { name: 'Marta Gómez', department: 'Comercial' },
@@ -9,7 +10,7 @@ export const EMPLOYEES = [
   { name: 'Otro', department: 'Otro' },
 ];
 
-export const DEPARTMENTS = [
+export const INITIAL_DEPARTMENTS = [
   "Dirección",
   "Calidad",
   "Comercial",
