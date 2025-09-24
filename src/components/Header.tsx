@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Package2 } from "lucide-react";
+import { Menu, Package2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
   { href: "/activos", label: "Visitas Activas" },
   { href: "/registros", label: "Consultar Registros" },
+  { href: "/configuracion/login", label: "Configuración" },
 ];
 
 export function Header() {
