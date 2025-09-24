@@ -19,6 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectPortal,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useVisits } from "@/hooks/use-visits";
@@ -171,13 +172,15 @@ export default function EntryForm() {
                         <SelectValue placeholder={configLoading ? t('loading') : t('select_person')} />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {employees.map((employee) => (
-                        <SelectItem key={employee.name} value={employee.name}>
-                          {employee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectPortal>
+                      <SelectContent>
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.name} value={employee.name}>
+                            {employee.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
                   </Select>
                   <FormMessage />
                 </FormItem>
