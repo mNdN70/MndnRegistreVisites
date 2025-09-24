@@ -17,7 +17,6 @@ import {
   setDoc,
   addDoc,
   getDoc,
-  documentId
 } from 'firebase/firestore';
 
 const DEPARTMENTS_COLLECTION = 'departments';
@@ -37,7 +36,6 @@ export const useConfig = () => {
   const { t } = useTranslation();
   
   const seedInitialData = useCallback(async () => {
-    console.log("Seeding initial data...");
     const batch = writeBatch(db);
     INITIAL_DEPARTMENTS.forEach(dept => {
         const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
@@ -48,7 +46,6 @@ export const useConfig = () => {
         batch.set(docRef, emp);
     });
     await batch.commit();
-    console.log("Initial data seeded.");
   }, []);
 
   const fetchConfig = useCallback(async () => {
@@ -109,19 +106,11 @@ export const useConfig = () => {
   const removeDepartment = useCallback(async (departmentName: string) => {
     try {
       const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentName);
-      const deptDoc = await getDoc(deptDocRef);
-
-      if (!deptDoc.exists()) {
-          toast({ title: 'Error', description: 'Departamento no encontrado.', variant: 'destructive' });
-          return;
-      }
       
       const batch = writeBatch(db);
       
-      // Delete department
       batch.delete(deptDocRef);
   
-      // Find and delete employees in that department
       const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', departmentName));
       const empSnapshot = await getDocs(empQuery);
       empSnapshot.forEach(doc => {

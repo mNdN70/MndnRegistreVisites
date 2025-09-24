@@ -32,7 +32,7 @@ export const useVisits = () => {
       const querySnapshot = await getDocs(q);
       const visitsData = querySnapshot.docs.map(doc => ({
         ...doc.data(),
-        docId: doc.id, // Keep firestore doc id
+        docId: doc.id,
       })) as AnyVisit[];
       setVisits(visitsData);
     } catch (error) {
@@ -85,7 +85,6 @@ export const useVisits = () => {
         privacyPolicyAccepted: visit.privacyPolicyAccepted,
         entryTime: new Date().toISOString(),
         exitTime: null,
-        type: visit.type,
       };
 
       let newVisit: Omit<AnyVisit, 'docId'>;
@@ -122,15 +121,10 @@ export const useVisits = () => {
   }, [findActiveVisitByDni, toast, t, fetchVisits]);
 
   const registerExit = useCallback(async (dni: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const q = query(
       collection(db, VISITS_COLLECTION),
       where('id', '==', dni.toLowerCase()),
       where('exitTime', '==', null),
-      // We search for entries from the beginning of today, not in the future
-      where('entryTime', '>=', today.toISOString()),
       orderBy('entryTime', 'desc'),
       limit(1)
     );
