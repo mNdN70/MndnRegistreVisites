@@ -25,7 +25,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useVisits } from "@/hooks/use-visits";
 import { useConfig } from "@/hooks/use-config";
 import { useState, useEffect } from "react";
-import { enableEntryButton } from "@/ai/flows/enable-entry-button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -49,7 +48,6 @@ export default function EntryForm() {
   const { addVisit } = useVisits();
   const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const { t } = useTranslation();
   
   const formSchema = getFormSchema(t);
@@ -80,26 +78,6 @@ export default function EntryForm() {
       }
     }
   }, [personToVisit, employees, form]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const checkButtonState = async () => {
-      try {
-        const { enabled } = await enableEntryButton({ privacyPolicyAccepted });
-        if (isMounted) {
-          setIsButtonEnabled(enabled);
-        }
-      } catch (error) {
-        console.error("AI flow failed:", error);
-        if (isMounted) {
-          // Fallback to manual logic if AI fails
-          setIsButtonEnabled(privacyPolicyAccepted);
-        }
-      }
-    };
-    checkButtonState();
-    return () => { isMounted = false; };
-  }, [privacyPolicyAccepted]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -258,7 +236,7 @@ export default function EntryForm() {
           />
           <div className="flex justify-between gap-4">
             <Button type="button" variant="outline" onClick={() => router.push('/')}>{t('cancel')}</Button>
-            <Button type="submit" disabled={!isButtonEnabled || isSubmitting}>
+            <Button type="submit" disabled={!privacyPolicyAccepted || isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('register_entry')}
             </Button>
