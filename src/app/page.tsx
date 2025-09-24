@@ -20,7 +20,8 @@ export default function Home() {
     const timer = setInterval(() => {
       const now = new Date();
       setCurrentTime(now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-      setCurrentDate(format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: locales[language] }));
+      const formattedDate = format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: locales[language] });
+      setCurrentDate(formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1));
     }, 1000);
 
     return () => clearInterval(timer);
@@ -78,7 +79,7 @@ export default function Home() {
       </div>
       <div className="text-center mt-12">
         {currentDate ? (
-            <p className="text-2xl font-body text-foreground capitalize-first">
+            <p className="text-2xl font-body text-foreground">
                 {currentDate}
             </p>
         ) : (
