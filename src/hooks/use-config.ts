@@ -94,44 +94,48 @@ export const useConfig = () => {
   }, [fetchConfig]);
 
   const addDepartment = useCallback(async (department: string) => {
-    const departmentId = department.toLowerCase();
+    if (departments.map(d => d.toLowerCase()).includes(department.toLowerCase())) {
+        toast({ title: t('duplicated_department'), variant: 'destructive' });
+        return;
+    }
+    const departmentId = department.toLowerCase().replace(/\s+/g, '-');
     const docRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
 
     try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            toast({ title: t('duplicated_department'), variant: 'destructive' });
-            return;
-        }
-
         await setDoc(docRef, { name: department });
         setDepartments(prev => [...prev, department].sort());
         toast({ title: t('department_added') });
     } catch (error) {
        toast({ title: 'Error', description: 'No se pudo añadir el departamento.', variant: 'destructive' });
     }
-  }, [toast, t]);
+  }, [departments, toast, t]);
 
   const removeDepartment = useCallback(async (department: string) => {
-    const batch = writeBatch(db);
+    const departmentId = department.toLowerCase().replace(/\s+/g, '-');
+    const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
+
     try {
-      const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, department.toLowerCase());
-      batch.delete(deptDocRef);
+        const batch = writeBatch(db);
 
-      const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
-      const empSnapshot = await getDocs(empQuery);
-      empSnapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      
-      await batch.commit();
+        // Delete department
+        batch.delete(deptDocRef);
 
-      setDepartments(prev => prev.filter(d => d !== department));
-      setEmployees(prev => prev.filter(e => e.department !== department));
-      
-      toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+        // Find and delete employees in that department
+        const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
+        const empSnapshot = await getDocs(empQuery);
+        empSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+
+        setDepartments(prev => prev.filter(d => d !== department));
+        setEmployees(prev => prev.filter(e => e.department !== department));
+        
+        toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
     } catch(error) {
-      toast({ title: 'Error', description: 'No se pudo eliminar el departamento.', variant: 'destructive' });
+        console.error("Error removing department:", error);
+        toast({ title: 'Error', description: 'No se pudo eliminar el departamento.', variant: 'destructive' });
     }
   }, [toast, t]);
 
@@ -167,5 +171,5 @@ export const useConfig = () => {
   }, [employees, toast, t]);
 
 
-  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee };
+  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee, fetchConfig };
 };
