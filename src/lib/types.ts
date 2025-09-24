@@ -4,7 +4,7 @@ export interface BaseVisit {
   company: string;
   reason?: string;
   personToVisit: string;
-  department: string;
+  department?: string;
   entryTime: string; // ISO string
   exitTime: string | null; // ISO string or null
   privacyPolicyAccepted: boolean;

@@ -39,7 +39,7 @@ const getFormSchema = (t: (key: string) => string) => z.object({
   trailerLicensePlate: z.string().optional(),
   reason: z.string().optional(),
   personToVisit: z.string().min(1, t('person_to_visit_required')),
-  department: z.string().min(1, t('department_required')),
+  department: z.string().optional(),
   privacyPolicyAccepted: z.boolean().refine((val) => val === true, {
     message: t('privacy_policy_required'),
   }),
