@@ -6,18 +6,25 @@ import { LogOut, Truck, User } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { ca, es, enUS } from 'date-fns/locale';
+
+const locales: { [key: string]: Locale } = { ca, es, en: enUS };
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+      setCurrentDate(format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: locales[language] }));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [language]);
 
 
   const actionCards = [
@@ -70,12 +77,21 @@ export default function Home() {
         ))}
       </div>
       <div className="text-center mt-12">
+        {currentDate ? (
+            <p className="text-2xl font-body text-foreground capitalize-first">
+                {currentDate}
+            </p>
+        ) : (
+            <p className="text-2xl font-body text-muted-foreground animate-pulse">
+                &nbsp;
+            </p>
+        )}
         {currentTime ? (
-          <p className="text-6xl font-body tracking-widest text-foreground">
+          <p className="text-[3.5rem] font-body tracking-widest text-foreground">
             {currentTime}
           </p>
         ) : (
-          <p className="text-6xl font-body tracking-widest text-muted-foreground animate-pulse">
+          <p className="text-[3.5rem] font-body tracking-widest text-muted-foreground animate-pulse">
             00:00:00
           </p>
         )}
