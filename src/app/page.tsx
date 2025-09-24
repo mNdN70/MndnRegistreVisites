@@ -5,9 +5,20 @@ import { PageContainer } from "@/components/PageContainer";
 import { LogOut, Truck, User } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const { t } = useTranslation();
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
 
   const actionCards = [
     {
@@ -57,6 +68,17 @@ export default function Home() {
             </Card>
           </Link>
         ))}
+      </div>
+      <div className="text-center mt-12">
+        {currentTime ? (
+          <p className="text-5xl font-mono tracking-widest text-foreground">
+            {currentTime}
+          </p>
+        ) : (
+          <p className="text-5xl font-mono tracking-widest text-muted-foreground animate-pulse">
+            00:00:00
+          </p>
+        )}
       </div>
     </PageContainer>
   );
