@@ -6,7 +6,7 @@ import { useToast } from './use-toast';
 import { isToday } from 'date-fns';
 import { useTranslation } from './use-translation';
 
-const VISITS_STORAGE_KEY = 'visitwise-visits';
+const VISITS_STORAGE_KEY = 'menadiona-visits';
 
 export const useVisits = () => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);

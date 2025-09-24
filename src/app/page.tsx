@@ -34,7 +34,7 @@ export default function Home() {
     <PageContainer>
       <div className="text-center mb-12">
         <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
-          {t('welcome_to_visitwise')}
+          {t('welcome_to_menadiona')}
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('main_description')}

@@ -43,7 +43,7 @@ export function Header() {
         <div className="mr-auto flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <Package2 className="h-6 w-6 text-primary" />
-            <span className="font-headline text-2xl font-bold">VisitWise</span>
+            <span className="font-headline text-2xl font-bold">Menadiona</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
             {navLinks.map((link) => (
@@ -87,7 +87,7 @@ export function Header() {
                     className="flex items-center gap-2 text-lg font-semibold"
                     >
                     <Package2 className="h-6 w-6 text-primary" />
-                    <span className="sr-only">VisitWise</span>
+                    <span className="sr-only">Menadiona</span>
                     </Link>
                     {navLinks.map((link) => (
                     <NavLink key={link.href} {...link} />

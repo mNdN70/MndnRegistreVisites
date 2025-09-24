@@ -5,8 +5,8 @@ import { useToast } from './use-toast';
 import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from '@/lib/constants';
 import { useTranslation } from './use-translation';
 
-const DEPARTMENTS_STORAGE_KEY = 'visitwise-departments';
-const EMPLOYEES_STORAGE_KEY = 'visitwise-employees';
+const DEPARTMENTS_STORAGE_KEY = 'menadiona-departments';
+const EMPLOYEES_STORAGE_KEY = 'menadiona-employees';
 
 export interface Employee {
   name: string;

@@ -19,13 +19,15 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const getStoredLanguage = (): Language | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('visitwise-language') as Language;
+    return localStorage.getItem('menadiona-language') as Language;
 }
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('ca');
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
     const storedLang = getStoredLanguage();
     if (storedLang && translations[storedLang]) {
       setLanguageState(storedLang);
@@ -34,14 +36,18 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLanguage = (lang: Language) => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem('visitwise-language', lang);
+        localStorage.setItem('menadiona-language', lang);
     }
     setLanguageState(lang);
   };
 
   const t = useCallback((key: string): string => {
+    if (!isClient) {
+        // Return default language translation on server
+        return translations['ca'][key as keyof typeof translations['ca']] || key;
+    }
     return translations[language][key as keyof typeof translations[Language]] || key;
-  }, [language]);
+  }, [language, isClient]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
