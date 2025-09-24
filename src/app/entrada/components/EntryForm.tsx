@@ -25,7 +25,7 @@ import { useVisits } from "@/hooks/use-visits";
 import { useConfig } from "@/hooks/use-config";
 import { useState, useEffect } from "react";
 import { enableEntryButton } from "@/ai/flows/enable-entry-button";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
@@ -243,7 +243,7 @@ export default function EntryForm() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                           <Button onClick={(e) => e.preventDefault()}>{t('close')}</Button>
+                           <AlertDialogCancel>{t('close')}</AlertDialogCancel>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
