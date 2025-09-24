@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnyVisit } from '@/lib/types';
+import type { AnyVisit, TransporterVisit } from '@/lib/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { useTranslation } from './use-translation';
@@ -62,7 +62,7 @@ export const useVisits = () => {
     return !querySnapshot.empty;
   }, []);
 
-  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime'>) => {
+  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     if (await findActiveVisitByDni(visit.id)) {
       const errorMessage = t('duplicate_entry_detail');
       toast({
@@ -73,13 +73,39 @@ export const useVisits = () => {
       return { success: false, message: errorMessage };
     }
     try {
-      const newVisit: Omit<AnyVisit, 'docId'> = {
-        ...visit,
+      const baseVisitData = {
         id: visit.id.toLowerCase(),
+        name: visit.name,
+        company: visit.company,
+        reason: visit.reason,
+        personToVisit: visit.personToVisit,
+        department: visit.department,
+        privacyPolicyAccepted: visit.privacyPolicyAccepted,
         entryTime: new Date().toISOString(),
         exitTime: null,
+        type: visit.type,
       };
+
+      let newVisit: Omit<AnyVisit, 'docId'>;
+
+      if (visit.type === 'transporter') {
+        const transporterVisit = visit as Omit<TransporterVisit, 'entryTime' | 'exitTime' | 'docId'>;
+        newVisit = {
+          ...baseVisitData,
+          haulierCompany: transporterVisit.haulierCompany,
+          licensePlate: transporterVisit.licensePlate,
+          trailerLicensePlate: transporterVisit.trailerLicensePlate,
+          type: 'transporter',
+        };
+      } else {
+        newVisit = {
+          ...baseVisitData,
+          type: 'general',
+        };
+      }
+      
       await addDoc(collection(db, VISITS_COLLECTION), newVisit);
+
       fetchVisits(); // Refresh data
       toast({
         title: t('entry_registered'),
@@ -87,6 +113,7 @@ export const useVisits = () => {
       });
       return { success: true };
     } catch (error) {
+       console.error("Error adding visit:", error);
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
        return { success: false };
     }
@@ -100,6 +127,7 @@ export const useVisits = () => {
       collection(db, VISITS_COLLECTION),
       where('id', '==', dni.toLowerCase()),
       where('exitTime', '==', null),
+      // We search for entries from the beginning of today, not in the future
       where('entryTime', '>=', today.toISOString()),
       orderBy('entryTime', 'desc'),
       limit(1)
@@ -192,11 +220,11 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [toast, t]);
+  }, [toast, t, createCSV]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
-  }, [getActiveVisits, toast, t, createCSV]);
+  }, [getActiveVisits, createCSV]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV };
