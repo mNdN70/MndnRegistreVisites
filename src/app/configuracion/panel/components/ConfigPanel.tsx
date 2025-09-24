@@ -126,7 +126,7 @@ export default function ConfigPanel() {
             </div>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
               {employees.map((emp) => (
-                <li key={emp.name} className="flex justify-between items-center p-2 border rounded-md">
+                <li key={emp.id} className="flex justify-between items-center p-2 border rounded-md">
                   <div>
                     <p>{emp.name}</p>
                     <p className="text-xs text-muted-foreground">{emp.department}</p>

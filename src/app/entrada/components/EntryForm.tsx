@@ -153,7 +153,7 @@ export default function EntryForm() {
                     <SelectPortal>
                       <SelectContent>
                         {employees.map((employee) => (
-                          <SelectItem key={employee.name} value={employee.name}>
+                          <SelectItem key={employee.id} value={employee.name}>
                             {employee.name}
                           </SelectItem>
                         ))}
