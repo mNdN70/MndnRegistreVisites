@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, VenetianMask } from "lucide-react";
+import { Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -23,7 +23,7 @@ export default function RecordsTable() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-12 w-40" />
+        <Skeleton className="h-12 w-40 ml-auto" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />

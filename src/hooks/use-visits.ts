@@ -109,8 +109,8 @@ export const useVisits = () => {
     return [...visits].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits]);
   
-  const exportToCSV = useCallback(() => {
-    if (visits.length === 0) {
+  const createCSV = (data: AnyVisit[], filename: string) => {
+    if (data.length === 0) {
       toast({
         title: 'No hay datos para exportar',
         variant: 'destructive'
@@ -122,7 +122,7 @@ export const useVisits = () => {
       'ID', 'Nombre', 'Empresa', 'Motivo Visita', 'Persona a Visitar', 'Departamento', 'Hora Entrada', 'Hora Salida', 'Tipo', 'Empresa Tpts', 'Matrícula', 'Matrícula Remolque'
     ];
     
-    const rows = visits.map(v => {
+    const rows = data.map(v => {
       const baseRow = [
         v.id,
         v.name,
@@ -147,15 +147,23 @@ export const useVisits = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'registros_visitas.csv');
+    link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     toast({ title: 'Exportación completada' });
-  }, [visits, toast]);
+  };
+
+  const exportToCSV = useCallback(() => {
+    createCSV(getAllVisits(), 'registros_visitas_historico.csv');
+  }, [getAllVisits, toast]);
+
+  const exportActiveVisitsToCSV = useCallback(() => {
+    createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
+  }, [getActiveVisits, toast]);
 
 
-  return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV };
+  return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV };
 };
