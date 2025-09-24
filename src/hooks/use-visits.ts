@@ -51,37 +51,26 @@ export const useVisits = () => {
     fetchVisits();
   }, [fetchVisits]);
 
-  const findActiveVisitByDni = useCallback(async (dni: string): Promise<boolean> => {
+  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     try {
-        const q = query(
+        const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
-            where('id', '==', dni.toLowerCase()),
+            where('id', '==', visit.id.toLowerCase()),
             where('exitTime', '==', null),
             limit(1)
         );
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
-    } catch (error) {
-        console.error("Error finding active visit:", error);
-        // In case of error, prevent new entry to be safe
-        return true; 
-    }
-  }, []);
+        const activeVisitSnapshot = await getDocs(activeVisitQuery);
 
-  const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
-    
-    const isActive = await findActiveVisitByDni(visit.id);
-    if (isActive) {
-      const errorMessage = t('duplicate_entry_detail');
-      toast({
-        title: t('duplicate_entry'),
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      return { success: false, message: errorMessage };
-    }
-    
-    try {
+        if (!activeVisitSnapshot.empty) {
+            const errorMessage = t('duplicate_entry_detail');
+            toast({
+                title: t('duplicate_entry'),
+                description: errorMessage,
+                variant: 'destructive',
+            });
+            return { success: false, message: errorMessage };
+        }
+      
       const baseVisitData = {
         id: visit.id.toLowerCase(),
         name: visit.name,
@@ -125,7 +114,7 @@ export const useVisits = () => {
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
        return { success: false };
     }
-  }, [findActiveVisitByDni, toast, t, fetchVisits]);
+  }, [toast, t, fetchVisits]);
 
   const registerExit = useCallback(async (dni: string) => {
     const q = query(
