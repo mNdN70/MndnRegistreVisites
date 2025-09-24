@@ -52,17 +52,24 @@ export const useVisits = () => {
   }, [fetchVisits]);
 
   const findActiveVisitByDni = useCallback(async (dni: string): Promise<boolean> => {
-    const q = query(
-      collection(db, VISITS_COLLECTION),
-      where('id', '==', dni.toLowerCase()),
-      where('exitTime', '==', null),
-      limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
+    try {
+        const q = query(
+            collection(db, VISITS_COLLECTION),
+            where('id', '==', dni.toLowerCase()),
+            where('exitTime', '==', null),
+            limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        return !querySnapshot.empty;
+    } catch (error) {
+        console.error("Error finding active visit:", error);
+        // In case of error, prevent new entry to be safe
+        return true; 
+    }
   }, []);
 
   const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
+    
     const isActive = await findActiveVisitByDni(visit.id);
     if (isActive) {
       const errorMessage = t('duplicate_entry_detail');
@@ -107,7 +114,7 @@ export const useVisits = () => {
       
       await addDoc(collection(db, VISITS_COLLECTION), newVisit);
 
-      fetchVisits(); // Refresh data
+      await fetchVisits(); // Refresh data
       toast({
         title: t('entry_registered'),
         description: t('entry_registered_detail').replace('{name}', visit.name),
@@ -146,7 +153,7 @@ export const useVisits = () => {
         exitTime: new Date().toISOString(),
       });
       
-      fetchVisits(); // Refresh data
+      await fetchVisits(); // Refresh data
 
       toast({
         title: t('exit_registered'),
