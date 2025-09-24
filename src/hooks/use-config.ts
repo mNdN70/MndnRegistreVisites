@@ -64,13 +64,13 @@ export const useConfig = () => {
              await seedInitialData();
              // Refetch after seeding
              const newDepartmentsSnapshot = await getDocs(departmentsQuery);
-             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name));
+             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
              
              employeesSnapshot = await getDocs(employeesQuery);
-             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)));
+             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
         } else {
-            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name));
-            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)));
+            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
+            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
         }
     } catch (error) {
       console.error('Error fetching config from Firestore', error);
