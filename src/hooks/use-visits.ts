@@ -156,9 +156,9 @@ export const useVisits = () => {
     toast({ title: 'Exportación completada' });
   };
 
-  const exportToCSV = useCallback(() => {
-    createCSV(getAllVisits(), 'registros_visitas_historico.csv');
-  }, [getAllVisits, toast]);
+  const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
+    createCSV(data, filename);
+  }, [toast]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
