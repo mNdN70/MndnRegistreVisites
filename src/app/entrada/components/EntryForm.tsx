@@ -35,7 +35,7 @@ const formSchema = z.object({
   company: z.string().min(1, "La empresa es obligatoria."),
   reason: z.string().optional(),
   personToVisit: z.string().min(1, "Debe seleccionar una persona a visitar."),
-  department: z.string().min(1, "Debe seleccionar un departamento."),
+  department: z.string().min(1, "El departamento es obligatorio."),
   privacyPolicyAccepted: z.boolean().refine((val) => val === true, {
     message: "Debe aceptar la política de tratamiento de datos.",
   }),
@@ -44,7 +44,7 @@ const formSchema = z.object({
 export default function EntryForm() {
   const router = useRouter();
   const { addVisit } = useVisits();
-  const { employees, departments, loading: configLoading } = useConfig();
+  const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
@@ -62,6 +62,18 @@ export default function EntryForm() {
   });
 
   const privacyPolicyAccepted = form.watch("privacyPolicyAccepted");
+  const personToVisit = form.watch("personToVisit");
+
+  useEffect(() => {
+    if (personToVisit) {
+      const employee = employees.find((emp) => emp.name === personToVisit);
+      if (employee) {
+        form.setValue("department", employee.department, { shouldValidate: true });
+      } else {
+        form.setValue("department", "", { shouldValidate: true });
+      }
+    }
+  }, [personToVisit, employees, form]);
 
   useEffect(() => {
     let isMounted = true;
@@ -172,20 +184,9 @@ export default function EntryForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Departamento</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={configLoading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={configLoading ? "Cargando..." : "Seleccione un departamento"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {departments.map((department) => (
-                        <SelectItem key={department} value={department}>
-                          {department}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input readOnly placeholder="Se rellenará automáticamente" {...field} className="bg-muted" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
