@@ -71,11 +71,11 @@ export default function Home() {
       </div>
       <div className="text-center mt-12">
         {currentTime ? (
-          <p className="text-5xl font-body tracking-widest text-foreground">
+          <p className="text-6xl font-body tracking-widest text-foreground">
             {currentTime}
           </p>
         ) : (
-          <p className="text-5xl font-body tracking-widest text-muted-foreground animate-pulse">
+          <p className="text-6xl font-body tracking-widest text-muted-foreground animate-pulse">
             00:00:00
           </p>
         )}
