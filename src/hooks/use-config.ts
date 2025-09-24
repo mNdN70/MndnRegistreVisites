@@ -17,6 +17,7 @@ import {
   setDoc,
   addDoc,
   getDoc,
+  getCountFromServer
 } from 'firebase/firestore';
 
 const DEPARTMENTS_COLLECTION = 'departments';
@@ -37,20 +38,31 @@ export const useConfig = () => {
   
   const seedInitialData = useCallback(async () => {
     const batch = writeBatch(db);
-    INITIAL_DEPARTMENTS.forEach(dept => {
-        const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
-        batch.set(docRef, { name: dept });
-    });
-    INITIAL_EMPLOYEES.forEach(emp => {
-        const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
-        batch.set(docRef, emp);
-    });
+    
+    const departmentsCountSnapshot = await getCountFromServer(collection(db, DEPARTMENTS_COLLECTION));
+    if(departmentsCountSnapshot.data().count === 0 && INITIAL_DEPARTMENTS.length > 0) {
+      INITIAL_DEPARTMENTS.forEach(dept => {
+          const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
+          batch.set(docRef, { name: dept });
+      });
+    }
+
+    const employeesCountSnapshot = await getCountFromServer(collection(db, EMPLOYEES_COLLECTION));
+    if(employeesCountSnapshot.data().count === 0 && INITIAL_EMPLOYEES.length > 0) {
+      INITIAL_EMPLOYEES.forEach(emp => {
+          const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
+          batch.set(docRef, emp);
+      });
+    }
+    
     await batch.commit();
   }, []);
 
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
+      await seedInitialData();
+
       const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
       const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
 
@@ -58,20 +70,10 @@ export const useConfig = () => {
         getDocs(departmentsQuery),
         getDocs(employeesQuery)
       ]);
+      
+      setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
+      setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
 
-      if (departmentsSnapshot.empty && employeesSnapshot.empty) {
-        await seedInitialData();
-        // Refetch after seeding
-        const [newDepartmentsSnapshot, newEmployeesSnapshot] = await Promise.all([
-          getDocs(departmentsQuery),
-          getDocs(employeesQuery)
-        ]);
-        setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
-        setEmployees(newEmployeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-      } else {
-        setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
-        setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-      }
     } catch (error) {
       console.error('Error fetching config from Firestore', error);
       toast({
