@@ -54,24 +54,27 @@ export const useConfig = () => {
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-        const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
-        const departmentsSnapshot = await getDocs(departmentsQuery);
-        
-        const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
-        let employeesSnapshot = await getDocs(employeesQuery);
+      const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
+      const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
 
-        if (departmentsSnapshot.empty && employeesSnapshot.empty) {
-             await seedInitialData();
-             // Refetch after seeding
-             const newDepartmentsSnapshot = await getDocs(departmentsQuery);
-             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
-             
-             employeesSnapshot = await getDocs(employeesQuery);
-             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-        } else {
-            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
-            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-        }
+      const [departmentsSnapshot, employeesSnapshot] = await Promise.all([
+        getDocs(departmentsQuery),
+        getDocs(employeesQuery)
+      ]);
+
+      if (departmentsSnapshot.empty && employeesSnapshot.empty) {
+        await seedInitialData();
+        // Refetch after seeding
+        const [newDepartmentsSnapshot, newEmployeesSnapshot] = await Promise.all([
+          getDocs(departmentsQuery),
+          getDocs(employeesQuery)
+        ]);
+        setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
+        setEmployees(newEmployeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+      } else {
+        setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
+        setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+      }
     } catch (error) {
       console.error('Error fetching config from Firestore', error);
       toast({
