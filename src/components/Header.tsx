@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,6 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <div className="mr-auto flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Menadiona Logo" width={32} height={32} />
             <span className="font-headline text-2xl font-bold">Menadiona</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
@@ -87,7 +85,6 @@ export function Header() {
                     href="/"
                     className="flex items-center gap-2 text-lg font-semibold"
                     >
-                    <Image src="/logo.png" alt="Menadiona Logo" width={32} height={32} />
                     <span className="sr-only">Menadiona</span>
                     </Link>
                     {navLinks.map((link) => (
