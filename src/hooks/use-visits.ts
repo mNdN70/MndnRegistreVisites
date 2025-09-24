@@ -151,6 +151,7 @@ export const useVisits = () => {
       });
       return { success: true };
     } catch(error) {
+      console.error("Error registering exit:", error);
       toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
       return { success: false, message: 'No se pudo registrar la salida.'};
     }
