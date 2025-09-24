@@ -16,13 +16,13 @@ import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
   const pathname = usePathname();
-  const { t, setLanguage } = useTranslation();
+  const { setLanguage } = useTranslation();
 
   const navLinks = [
-    { href: "/", label: t("home") },
-    { href: "/activos", label: t("active_visits") },
-    { href: "/registros", label: t("consult_records") },
-    { href: "/configuracion/login", label: t("configuration") },
+    { href: "/", label: "Inici" },
+    { href: "/activos", label: "Visites Actives" },
+    { href: "/registros", label: "Consultar Registres" },
+    { href: "/configuracion/login", label: "Configuració" },
   ];
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
