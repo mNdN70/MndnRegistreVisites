@@ -4,8 +4,8 @@ import { useConfig, Employee } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, UserPlus, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Trash2, UserPlus, LogOut, FileUp, FileDown } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { useToast } from "@/hooks/use-toast";
 
 export default function ConfigPanel() {
   const router = useRouter();
@@ -27,11 +27,14 @@ export default function ConfigPanel() {
     addEmployee,
     removeEmployee,
     loading,
+    updateEmployees,
   } = useConfig();
+  const { toast } = useToast();
 
   const [newDepartment, setNewDepartment] = useState("");
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeeDept, setNewEmployeeDept] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem("config-auth") === "true";
@@ -67,6 +70,51 @@ export default function ConfigPanel() {
   const handleLogout = () => {
     sessionStorage.removeItem("config-auth");
     router.push("/");
+  };
+  
+  const handleExport = () => {
+    const data = { employees, departments };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `visitwise-config-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({title: "Configuración exportada"});
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result;
+          if (typeof text === 'string') {
+            const data = JSON.parse(text);
+            if (data.employees && data.departments) {
+              updateEmployees(data.employees);
+              // This is a bit of a trick to update departments without exposing a full setter
+              // First, remove all existing departments
+              departments.forEach(d => removeDepartment(d));
+              // Then add the new ones
+              data.departments.forEach((d:string) => addDepartment(d));
+              toast({title: "Configuración importada con éxito"});
+            } else {
+              throw new Error("Formato de archivo incorrecto");
+            }
+          }
+        } catch (error) {
+          toast({title: "Error al importar", description: "El archivo no es válido.", variant: "destructive"});
+        }
+      };
+      reader.readAsText(file);
+    }
+    // Reset file input
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   };
 
 
@@ -139,8 +187,13 @@ export default function ConfigPanel() {
           </CardContent>
         </Card>
       </div>
-      <div className="flex justify-end gap-4 mt-8">
-         <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Cerrar Sesión</Button>
+       <div className="flex justify-between items-center gap-4 mt-8">
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport}><FileUp className="mr-2"/>Exportar</Button>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}><FileDown className="mr-2"/>Importar</Button>
+          <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden"/>
+        </div>
+        <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2" />Cerrar Sesión</Button>
       </div>
     </div>
   );

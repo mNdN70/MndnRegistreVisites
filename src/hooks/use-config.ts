@@ -86,10 +86,17 @@ export const useConfig = () => {
   }, [departments, updateDepartments, toast]);
 
   const removeDepartment = useCallback((department: string) => {
+    // Filter out the department to be removed
     const newDepartments = departments.filter(d => d !== department);
     updateDepartments(newDepartments);
-    toast({ title: 'Departamento eliminado' });
-  }, [departments, updateDepartments, toast]);
+
+    // Also remove employees belonging to the removed department
+    const newEmployees = employees.filter(e => e.department !== department);
+    updateEmployees(newEmployees);
+
+    toast({ title: 'Departamento eliminado', description: 'Los empleados de este departamento también han sido eliminados.' });
+  }, [departments, employees, updateDepartments, updateEmployees, toast]);
+
 
   const addEmployee = useCallback((employee: Employee) => {
      if (employees.find(e => e.name.toLowerCase() === employee.name.toLowerCase())) {
@@ -108,5 +115,5 @@ export const useConfig = () => {
   }, [employees, updateEmployees, toast]);
 
 
-  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee };
+  return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployees };
 };
