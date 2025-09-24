@@ -52,6 +52,7 @@ export const useVisits = () => {
   }, [fetchVisits]);
 
   const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
+    setIsSubmitting(true);
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
@@ -68,6 +69,7 @@ export const useVisits = () => {
                 description: errorMessage,
                 variant: 'destructive',
             });
+            setIsSubmitting(false);
             return { success: false, message: errorMessage };
         }
       
@@ -112,6 +114,7 @@ export const useVisits = () => {
     } catch (error) {
        console.error("Error adding visit:", error);
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
+       setIsSubmitting(false);
        return { success: false, message: 'No se pudo registrar la entrada.' };
     }
   }, [toast, t, fetchVisits]);
