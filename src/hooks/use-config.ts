@@ -98,7 +98,7 @@ export const useConfig = () => {
         toast({ title: t('duplicated_department'), variant: 'destructive' });
         return;
     }
-    const departmentId = department.toLowerCase().replace(/\s+/g, '-');
+    const departmentId = department.toLowerCase();
     const docRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
 
     try {
@@ -111,7 +111,7 @@ export const useConfig = () => {
   }, [departments, toast, t]);
 
   const removeDepartment = useCallback(async (department: string) => {
-    const departmentId = department.toLowerCase().replace(/\s+/g, '-');
+    const departmentId = department.toLowerCase();
     const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
 
     try {
