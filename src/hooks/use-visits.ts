@@ -52,7 +52,6 @@ export const useVisits = () => {
   }, [fetchVisits]);
 
   const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
-    setIsSubmitting(true);
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
@@ -69,7 +68,6 @@ export const useVisits = () => {
                 description: errorMessage,
                 variant: 'destructive',
             });
-            setIsSubmitting(false);
             return { success: false, message: errorMessage };
         }
       
@@ -103,9 +101,9 @@ export const useVisits = () => {
         };
       }
       
-      await addDoc(collection(db, VISITS_COLLECTION), newVisit);
+      const docRef = await addDoc(collection(db, VISITS_COLLECTION), newVisit);
+      setVisits(prev => [{ docId: docRef.id, ...newVisit }, ...prev]);
 
-      await fetchVisits(); // Refresh data
       toast({
         title: t('entry_registered'),
         description: t('entry_registered_detail').replace('{name}', visit.name),
@@ -114,10 +112,9 @@ export const useVisits = () => {
     } catch (error) {
        console.error("Error adding visit:", error);
        toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
-       setIsSubmitting(false);
        return { success: false, message: 'No se pudo registrar la entrada.' };
     }
-  }, [toast, t, fetchVisits]);
+  }, [toast, t]);
 
   const registerExit = useCallback(async (dni: string) => {
     const q = query(
@@ -141,11 +138,12 @@ export const useVisits = () => {
       }
 
       const visitDoc = querySnapshot.docs[0];
+      const exitTime = new Date().toISOString();
       await updateDoc(doc(db, VISITS_COLLECTION, visitDoc.id), {
-        exitTime: new Date().toISOString(),
+        exitTime: exitTime,
       });
       
-      await fetchVisits(); // Refresh data
+      setVisits(prevVisits => prevVisits.map(v => v.docId === visitDoc.id ? {...v, exitTime: exitTime} : v))
 
       toast({
         title: t('exit_registered'),
@@ -154,9 +152,9 @@ export const useVisits = () => {
       return { success: true };
     } catch(error) {
       toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
-      return { success: false };
+      return { success: false, message: 'No se pudo registrar la salida.'};
     }
-  }, [toast, t, fetchVisits]);
+  }, [toast, t]);
 
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
