@@ -15,7 +15,8 @@ import {
   where,
   orderBy,
   setDoc,
-  getDoc
+  getDoc,
+  addDoc
 } from 'firebase/firestore';
 
 const DEPARTMENTS_COLLECTION = 'departments';
@@ -35,26 +36,18 @@ export const useConfig = () => {
   const { t } = useTranslation();
   
   const seedInitialData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const departmentsSnapshot = await getDocs(collection(db, DEPARTMENTS_COLLECTION));
-      if (departmentsSnapshot.empty) {
-        const batch = writeBatch(db);
-        INITIAL_DEPARTMENTS.forEach(dept => {
-            const docRef = doc(db, DEPARTMENTS_COLLECTION, dept.toLowerCase());
-            batch.set(docRef, { name: dept });
-        });
-        INITIAL_EMPLOYEES.forEach(emp => {
-            const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
-            batch.set(docRef, emp);
-        });
-        await batch.commit();
-      }
-    } catch (error) {
-        console.error('Error seeding data', error);
-    } finally {
-        setLoading(false);
-    }
+    console.log("Seeding initial data...");
+    const batch = writeBatch(db);
+    INITIAL_DEPARTMENTS.forEach(dept => {
+        const docRef = doc(collection(db, DEPARTMENTS_COLLECTION));
+        batch.set(docRef, { name: dept });
+    });
+    INITIAL_EMPLOYEES.forEach(emp => {
+        const docRef = doc(collection(db, EMPLOYEES_COLLECTION));
+        batch.set(docRef, emp);
+    });
+    await batch.commit();
+    console.log("Initial data seeded.");
   }, []);
 
   const fetchConfig = useCallback(async () => {
@@ -63,16 +56,16 @@ export const useConfig = () => {
         const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
         const departmentsSnapshot = await getDocs(departmentsQuery);
         
-        const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
-        const employeesSnapshot = await getDocs(employeesQuery);
+        let employeesSnapshot = await getDocs(query(collection(db, EMPLOYEES_COLLECTION), orderBy('name')));
 
-        if (departmentsSnapshot.empty) {
+        if (departmentsSnapshot.empty && employeesSnapshot.empty) {
              await seedInitialData();
              // Refetch after seeding
              const newDepartmentsSnapshot = await getDocs(departmentsQuery);
-             const newEmployeesSnapshot = await getDocs(employeesQuery);
              setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
-             setEmployees(newEmployeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+             
+             employeesSnapshot = await getDocs(query(collection(db, EMPLOYEES_COLLECTION), orderBy('name')));
+             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
         } else {
             setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
@@ -98,11 +91,9 @@ export const useConfig = () => {
         toast({ title: t('duplicated_department'), variant: 'destructive' });
         return;
     }
-    const departmentId = department.toLowerCase();
-    const docRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
-
+    
     try {
-        await setDoc(docRef, { name: department });
+        await addDoc(collection(db, DEPARTMENTS_COLLECTION), { name: department });
         setDepartments(prev => [...prev, department].sort());
         toast({ title: t('department_added') });
     } catch (error) {
@@ -111,31 +102,35 @@ export const useConfig = () => {
   }, [departments, toast, t]);
 
   const removeDepartment = useCallback(async (department: string) => {
-    const departmentId = department.toLowerCase();
-    const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentId);
-
     try {
-        const batch = writeBatch(db);
-
-        // Delete department
-        batch.delete(deptDocRef);
-
-        // Find and delete employees in that department
-        const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
-        const empSnapshot = await getDocs(empQuery);
-        empSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        
-        await batch.commit();
-
-        setDepartments(prev => prev.filter(d => d !== department));
-        setEmployees(prev => prev.filter(e => e.department !== department));
-        
-        toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
-    } catch(error) {
-        console.error("Error removing department:", error);
-        toast({ title: 'Error', description: 'No se pudo eliminar el departamento.', variant: 'destructive' });
+      const batch = writeBatch(db);
+  
+      // Find department to delete
+      const deptQuery = query(collection(db, DEPARTMENTS_COLLECTION), where('name', '==', department));
+      const deptSnapshot = await getDocs(deptQuery);
+      if (deptSnapshot.empty) {
+        toast({ title: 'Error', description: 'Departamento no encontrado.', variant: 'destructive' });
+        return;
+      }
+      const deptDocRef = deptSnapshot.docs[0].ref;
+      batch.delete(deptDocRef);
+  
+      // Find and delete employees in that department
+      const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
+      const empSnapshot = await getDocs(empQuery);
+      empSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+  
+      await batch.commit();
+  
+      setDepartments(prev => prev.filter(d => d !== department));
+      setEmployees(prev => prev.filter(e => e.department !== department));
+  
+      toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+    } catch (error) {
+      console.error("Error removing department:", error);
+      toast({ title: 'Error', description: 'No se pudo eliminar el departamento.', variant: 'destructive' });
     }
   }, [toast, t]);
 
@@ -146,8 +141,7 @@ export const useConfig = () => {
       return;
     }
     try {
-      const newDocRef = doc(collection(db, EMPLOYEES_COLLECTION));
-      await setDoc(newDocRef, employee);
+      const newDocRef = await addDoc(collection(db, EMPLOYEES_COLLECTION), employee);
       setEmployees(prev => [...prev, {id: newDocRef.id, ...employee}].sort((a,b) => a.name.localeCompare(b.name)));
       toast({ title: t('employee_added') });
     } catch (error) {
