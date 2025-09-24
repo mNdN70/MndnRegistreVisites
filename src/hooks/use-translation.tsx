@@ -17,17 +17,19 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const getInitialLanguage = (): Language => {
-    if (typeof window === 'undefined') return 'ca';
-    const storedLang = localStorage.getItem('visitwise-language') as Language;
-    return storedLang && translations[storedLang] ? storedLang : 'ca';
+const getStoredLanguage = (): Language | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('visitwise-language') as Language;
 }
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const [language, setLanguageState] = useState<Language>('ca');
 
   useEffect(() => {
-    setLanguageState(getInitialLanguage());
+    const storedLang = getStoredLanguage();
+    if (storedLang && translations[storedLang]) {
+      setLanguageState(storedLang);
+    }
   }, []);
 
   const setLanguage = (lang: Language) => {
