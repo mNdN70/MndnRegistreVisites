@@ -15,7 +15,9 @@ import {
   where,
   orderBy,
   setDoc,
-  addDoc
+  addDoc,
+  getDoc,
+  documentId
 } from 'firebase/firestore';
 
 const DEPARTMENTS_COLLECTION = 'departments';
@@ -38,7 +40,7 @@ export const useConfig = () => {
     console.log("Seeding initial data...");
     const batch = writeBatch(db);
     INITIAL_DEPARTMENTS.forEach(dept => {
-        const docRef = doc(collection(db, DEPARTMENTS_COLLECTION));
+        const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
         batch.set(docRef, { name: dept });
     });
     INITIAL_EMPLOYEES.forEach(emp => {
@@ -55,19 +57,20 @@ export const useConfig = () => {
         const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
         const departmentsSnapshot = await getDocs(departmentsQuery);
         
-        let employeesSnapshot = await getDocs(query(collection(db, EMPLOYEES_COLLECTION), orderBy('name')));
+        const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
+        let employeesSnapshot = await getDocs(employeesQuery);
 
         if (departmentsSnapshot.empty && employeesSnapshot.empty) {
              await seedInitialData();
              // Refetch after seeding
              const newDepartmentsSnapshot = await getDocs(departmentsQuery);
-             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name).sort());
+             setDepartments(newDepartmentsSnapshot.docs.map(doc => doc.data().name));
              
-             employeesSnapshot = await getDocs(query(collection(db, EMPLOYEES_COLLECTION), orderBy('name')));
-             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+             employeesSnapshot = await getDocs(employeesQuery);
+             setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)));
         } else {
-            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
-            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+            setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name));
+            setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)));
         }
     } catch (error) {
       console.error('Error fetching config from Firestore', error);
@@ -92,7 +95,7 @@ export const useConfig = () => {
     }
     
     try {
-        await addDoc(collection(db, DEPARTMENTS_COLLECTION), { name: department });
+        await setDoc(doc(db, DEPARTMENTS_COLLECTION, department), { name: department });
         setDepartments(prev => [...prev, department].sort());
         toast({ title: t('department_added') });
     } catch (error) {
@@ -100,22 +103,23 @@ export const useConfig = () => {
     }
   }, [departments, toast, t]);
 
-  const removeDepartment = useCallback(async (department: string) => {
+  const removeDepartment = useCallback(async (departmentName: string) => {
     try {
-      const batch = writeBatch(db);
-  
-      // Find department to delete
-      const deptQuery = query(collection(db, DEPARTMENTS_COLLECTION), where('name', '==', department));
-      const deptSnapshot = await getDocs(deptQuery);
-      if (deptSnapshot.empty) {
-        toast({ title: 'Error', description: 'Departamento no encontrado.', variant: 'destructive' });
-        return;
+      const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentName);
+      const deptDoc = await getDoc(deptDocRef);
+
+      if (!deptDoc.exists()) {
+          toast({ title: 'Error', description: 'Departamento no encontrado.', variant: 'destructive' });
+          return;
       }
-      const deptDocRef = deptSnapshot.docs[0].ref;
+      
+      const batch = writeBatch(db);
+      
+      // Delete department
       batch.delete(deptDocRef);
   
       // Find and delete employees in that department
-      const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', department));
+      const empQuery = query(collection(db, EMPLOYEES_COLLECTION), where('department', '==', departmentName));
       const empSnapshot = await getDocs(empQuery);
       empSnapshot.forEach(doc => {
         batch.delete(doc.ref);
@@ -123,8 +127,8 @@ export const useConfig = () => {
   
       await batch.commit();
   
-      setDepartments(prev => prev.filter(d => d !== department));
-      setEmployees(prev => prev.filter(e => e.department !== department));
+      setDepartments(prev => prev.filter(d => d !== departmentName));
+      setEmployees(prev => prev.filter(e => e.department !== departmentName));
   
       toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
     } catch (error) {
