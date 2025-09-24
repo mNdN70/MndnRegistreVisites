@@ -28,18 +28,20 @@ import { enableEntryButton } from "@/ai/flows/enable-entry-button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
-const formSchema = z.object({
-  id: z.string().min(1, "El DNI/NIE es obligatorio."),
-  name: z.string().min(1, "El nombre y apellidos son obligatorios."),
-  company: z.string().min(1, "La empresa es obligatoria."),
+const getFormSchema = (t: (key: string) => string) => z.object({
+  id: z.string().min(1, t('dni_nie_required')),
+  name: z.string().min(1, t('name_required')),
+  company: z.string().min(1, t('company_required')),
   reason: z.string().optional(),
-  personToVisit: z.string().min(1, "Debe seleccionar una persona a visitar."),
-  department: z.string().min(1, "El departamento es obligatorio."),
+  personToVisit: z.string().min(1, t('person_to_visit_required')),
+  department: z.string().min(1, t('department_required')),
   privacyPolicyAccepted: z.boolean().refine((val) => val === true, {
-    message: "Debe aceptar la política de tratamiento de datos.",
+    message: t('privacy_policy_required'),
   }),
 });
+
 
 export default function EntryForm() {
   const router = useRouter();
@@ -47,6 +49,9 @@ export default function EntryForm() {
   const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+  const { t } = useTranslation();
+  
+  const formSchema = getFormSchema(t);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -116,9 +121,9 @@ export default function EntryForm() {
               name="id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>DNI / NIE</FormLabel>
+                  <FormLabel>{t('dni_nie')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: 12345678A o Y1234567Z" {...field} />
+                    <Input placeholder={t('dni_nie_placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,9 +134,9 @@ export default function EntryForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre y Apellidos</FormLabel>
+                  <FormLabel>{t('name_and_surnames')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: Juan Pérez" {...field} />
+                    <Input placeholder={t('name_placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,9 +149,9 @@ export default function EntryForm() {
             name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Empresa</FormLabel>
+                <FormLabel>{t('visitor_company')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre de la empresa del visitante" {...field} />
+                  <Input placeholder={t('visitor_company_placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -159,11 +164,11 @@ export default function EntryForm() {
               name="personToVisit"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Persona a visitar</FormLabel>
+                  <FormLabel>{t('person_to_visit')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={configLoading}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={configLoading ? "Cargando..." : "Seleccione una persona"} />
+                        <SelectValue placeholder={configLoading ? t('loading') : t('select_person')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -183,9 +188,9 @@ export default function EntryForm() {
               name="department"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Departamento</FormLabel>
+                  <FormLabel>{t('department')}</FormLabel>
                   <FormControl>
-                    <Input readOnly placeholder="Se rellenará automáticamente" {...field} className="bg-muted" />
+                    <Input readOnly placeholder={t('department_autocomplete')} {...field} className="bg-muted" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -198,9 +203,9 @@ export default function EntryForm() {
             name="reason"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Motivo de la visita (Opcional)</FormLabel>
+                <FormLabel>{t('visit_reason_optional')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej: Reunión de seguimiento" {...field} />
+                  <Input placeholder={t('reason_placeholder_meeting')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -223,20 +228,20 @@ export default function EntryForm() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <span className="cursor-pointer hover:underline text-accent">
-                          He leído y acepto la Política de tratamiento de datos.
+                          {t('privacy_policy_text')}
                         </span>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="font-headline">POLÍTICA DE TRATAMIENTO DE DATOS</AlertDialogTitle>
+                          <AlertDialogTitle className="font-headline">{t('privacy_policy_title')}</AlertDialogTitle>
                           <AlertDialogDescription className="text-foreground pt-4 space-y-2">
-                            <p>Le informamos que los datos relacionados con el control de acceso a las instalaciones se encuentra regulado por la Instrucción 1/1996 de la Agencia de Protección de Datos.</p>
-                            <p>Sus datos no serán cedidas a terceros excepto cuando sea indispensable para la prestación del servicio u obligaciones legales.</p>
-                            <p>Puede ejercer sus derechos dirigiéndose a menadiona@menadiona.com</p>
+                            <p>{t('privacy_policy_p1')}</p>
+                            <p>{t('privacy_policy_p2')}</p>
+                            <p>{t('privacy_policy_p3')}</p>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                           <Button onClick={(e) => e.preventDefault()}>Cerrar</Button>
+                           <Button onClick={(e) => e.preventDefault()}>{t('close')}</Button>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -247,10 +252,10 @@ export default function EntryForm() {
             )}
           />
           <div className="flex justify-between gap-4">
-            <Button type="button" variant="outline" onClick={() => router.push('/')}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/')}>{t('cancel')}</Button>
             <Button type="submit" disabled={!isButtonEnabled || isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Registrar Entrada
+              {t('register_entry')}
             </Button>
           </div>
         </form>

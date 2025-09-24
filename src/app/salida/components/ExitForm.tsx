@@ -17,15 +17,18 @@ import { useVisits } from "@/hooks/use-visits";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
-const formSchema = z.object({
-  id: z.string().min(1, "El DNI/NIE es obligatorio."),
+const getFormSchema = (t: (key: string) => string) => z.object({
+  id: z.string().min(1, t('dni_nie_required')),
 });
 
 export default function ExitForm() {
   const router = useRouter();
   const { registerExit } = useVisits();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = useTranslation();
+  const formSchema = getFormSchema(t);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,9 +56,9 @@ export default function ExitForm() {
           name="id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>DNI / NIE del visitante</FormLabel>
+              <FormLabel>{t('visitor_dni_nie')}</FormLabel>
               <FormControl>
-                <Input placeholder="Introduzca el DNI o NIE" {...field} />
+                <Input placeholder={t('dni_nie_input_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,11 +66,11 @@ export default function ExitForm() {
         />
         <div className="flex justify-between gap-4">
           <Button type="button" variant="outline" onClick={() => router.push('/')}>
-            Cancelar
+            {t('cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Registrar Salida
+            {t('register_exit')}
           </Button>
         </div>
       </form>

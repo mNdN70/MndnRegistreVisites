@@ -4,18 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Package2, Settings } from "lucide-react";
+import { Menu, Package2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navLinks = [
-  { href: "/", label: "Inicio" },
-  { href: "/activos", label: "Visitas Activas" },
-  { href: "/registros", label: "Consultar Registros" },
-  { href: "/configuracion/login", label: "Configuración" },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
   const pathname = usePathname();
+  const { t, setLanguage } = useTranslation();
+
+  const navLinks = [
+    { href: "/", label: t("home") },
+    { href: "/activos", label: t("active_visits") },
+    { href: "/registros", label: t("consult_records") },
+    { href: "/configuracion/login", label: t("configuration") },
+  ];
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
     <Link
@@ -43,30 +51,53 @@ export function Header() {
             ))}
           </nav>
         </div>
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <nav className="grid gap-6 text-lg font-medium">
-                <Link
-                  href="/"
-                  className="flex items-center gap-2 text-lg font-semibold"
-                >
-                  <Package2 className="h-6 w-6 text-primary" />
-                  <span className="sr-only">VisitWise</span>
-                </Link>
-                {navLinks.map((link) => (
-                  <NavLink key={link.href} {...link} />
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+        
+        <div className="flex items-center gap-2">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                <Globe className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Toggle language</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLanguage('ca')}>
+                Català
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('es')}>
+                Español
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('en')}>
+                English
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium">
+                    <Link
+                    href="/"
+                    className="flex items-center gap-2 text-lg font-semibold"
+                    >
+                    <Package2 className="h-6 w-6 text-primary" />
+                    <span className="sr-only">VisitWise</span>
+                    </Link>
+                    {navLinks.map((link) => (
+                    <NavLink key={link.href} {...link} />
+                    ))}
+                </nav>
+                </SheetContent>
+            </Sheet>
+            </div>
         </div>
+
       </div>
     </header>
   );

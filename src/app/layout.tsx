@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
+import { LanguageProvider } from '@/hooks/use-translation';
 
 export const metadata: Metadata = {
   title: 'VisitWise',
@@ -21,11 +22,13 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Alegreya&family=Belleza&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen bg-background flex flex-col">
-        <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Toaster />
+        <LanguageProvider>
+            <Header />
+            <main className="flex-grow">
+            {children}
+            </main>
+            <Toaster />
+        </LanguageProvider>
       </body>
     </html>
   );

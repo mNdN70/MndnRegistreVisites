@@ -14,16 +14,20 @@ import { Button } from "@/components/ui/button";
 import { Download, Calendar as CalendarIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca, enUS } from "date-fns/locale";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/use-translation";
+
+const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function RecordsTable() {
   const { getAllVisits, exportToCSV, loading } = useVisits();
   const allVisits = getAllVisits();
+  const { t, language } = useTranslation();
 
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfDay(new Date()),
@@ -39,7 +43,7 @@ export default function RecordsTable() {
 
   const handleExport = () => {
     if (filteredVisits.length === 0) {
-      alert("No hay visitas en el rango seleccionado para exportar.");
+      alert(t('no_data_to_export'));
       return;
     }
     const from = date?.from ? format(date.from, 'yyyy-MM-dd') : 'inicio';
@@ -76,14 +80,14 @@ export default function RecordsTable() {
                 {date?.from ? (
                   date.to ? (
                     <>
-                      {format(date.from, "LLL dd, y", { locale: es })} -{" "}
-                      {format(date.to, "LLL dd, y", { locale: es })}
+                      {format(date.from, "LLL dd, y", { locale: locales[language] })} -{" "}
+                      {format(date.to, "LLL dd, y", { locale: locales[language] })}
                     </>
                   ) : (
-                    format(date.from, "LLL dd, y", { locale: es })
+                    format(date.from, "LLL dd, y", { locale: locales[language] })
                   )
                 ) : (
-                  <span>Seleccione un rango</span>
+                  <span>{t('select_range')}</span>
                 )}
               </Button>
             </PopoverTrigger>
@@ -95,31 +99,31 @@ export default function RecordsTable() {
                 selected={date}
                 onSelect={setDate}
                 numberOfMonths={2}
-                locale={es}
+                locale={locales[language]}
               />
             </PopoverContent>
           </Popover>
         </div>
         <Button onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
-          Exportar a CSV
+          {t('export_to_csv')}
         </Button>
       </div>
       {filteredVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">No hay registros de visitas en el rango seleccionado.</p>
+          <p className="text-lg">{t('no_records_in_range')}</p>
         </div>
       ) : (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead className="hidden lg:table-cell">ID</TableHead>
-                <TableHead>Entrada</TableHead>
-                <TableHead>Salida</TableHead>
-                <TableHead className="hidden md:table-cell">Visita a</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{t('name')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('id')}</TableHead>
+                <TableHead>{t('entry')}</TableHead>
+                <TableHead>{t('exit_time')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('visiting')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -127,18 +131,18 @@ export default function RecordsTable() {
                 <TableRow key={visit.id + visit.entryTime}>
                   <TableCell className="font-medium">{visit.name}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{visit.id}</TableCell>
-                  <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: es })}</TableCell>
+                  <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: locales[language] })}</TableCell>
                   <TableCell>
                     {visit.exitTime
-                      ? format(new Date(visit.exitTime), "Pp", { locale: es })
+                      ? format(new Date(visit.exitTime), "Pp", { locale: locales[language] })
                       : "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{visit.personToVisit}</TableCell>
                   <TableCell>
                     {visit.exitTime ? (
-                      <Badge variant="outline">Finalizada</Badge>
+                      <Badge variant="outline">{t('finished')}</Badge>
                     ) : (
-                      <Badge variant="default" className="bg-green-600">Activa</Badge>
+                      <Badge variant="default" className="bg-green-600">{t('active')}</Badge>
                     )}
                   </TableCell>
                 </TableRow>

@@ -17,16 +17,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
-const formSchema = z.object({
-  username: z.string().min(1, "El usuario es obligatorio."),
-  password: z.string().min(1, "La contraseña es obligatoria."),
+
+const getFormSchema = (t: (key: string) => string) => z.object({
+  username: z.string().min(1, t('username_required')),
+  password: z.string().min(1, t('password_required')),
 });
+
 
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = useTranslation();
+  const formSchema = getFormSchema(t);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,16 +47,16 @@ export default function LoginForm() {
     if (values.username === "admin" && values.password === "admin") {
       try {
         sessionStorage.setItem("config-auth", "true");
-        toast({ title: "Acceso concedido" });
+        toast({ title: t('access_granted') });
         router.push("/configuracion/panel");
       } catch (error) {
-        toast({ title: "Error", description: "No se pudo iniciar sesión.", variant: "destructive" });
+        toast({ title: "Error", description: t('login_error'), variant: "destructive" });
         setIsSubmitting(false);
       }
     } else {
       toast({
-        title: "Error de acceso",
-        description: "Usuario o contraseña incorrectos.",
+        title: t('access_denied'),
+        description: t('wrong_user_or_pass'),
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -66,9 +71,9 @@ export default function LoginForm() {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Usuario</FormLabel>
+              <FormLabel>{t('username')}</FormLabel>
               <FormControl>
-                <Input placeholder="Su usuario" {...field} />
+                <Input placeholder={t('username_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,9 +84,9 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contraseña</FormLabel>
+              <FormLabel>{t('password')}</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Su contraseña" {...field} />
+                <Input type="password" placeholder={t('password_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -89,11 +94,11 @@ export default function LoginForm() {
         />
         <div className="flex justify-between gap-4">
           <Button type="button" variant="outline" onClick={() => router.push('/')}>
-            Cancelar
+            {t('cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Acceder
+            {t('login')}
           </Button>
         </div>
       </form>

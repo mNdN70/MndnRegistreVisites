@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from '@/lib/constants';
+import { useTranslation } from './use-translation';
 
 const DEPARTMENTS_STORAGE_KEY = 'visitwise-departments';
 const EMPLOYEES_STORAGE_KEY = 'visitwise-employees';
@@ -17,6 +18,7 @@ export const useConfig = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     try {
@@ -75,44 +77,42 @@ export const useConfig = () => {
     }
   }, [toast]);
   
-  const addDepartment = useCallback((department: string) => {
+  const addDepartment = useCallback((department: string, quiet = false) => {
     if (departments.find(d => d.toLowerCase() === department.toLowerCase())) {
-      toast({ title: 'Departamento duplicado', variant: 'destructive' });
+      if (!quiet) toast({ title: t('duplicated_department'), variant: 'destructive' });
       return;
     }
     const newDepartments = [...departments, department].sort();
     updateDepartments(newDepartments);
-    toast({ title: 'Departamento añadido' });
-  }, [departments, updateDepartments, toast]);
+    if (!quiet) toast({ title: t('department_added') });
+  }, [departments, updateDepartments, toast, t]);
 
-  const removeDepartment = useCallback((department: string) => {
-    // Filter out the department to be removed
+  const removeDepartment = useCallback((department: string, quiet = false) => {
     const newDepartments = departments.filter(d => d !== department);
     updateDepartments(newDepartments);
 
-    // Also remove employees belonging to the removed department
     const newEmployees = employees.filter(e => e.department !== department);
     updateEmployees(newEmployees);
 
-    toast({ title: 'Departamento eliminado', description: 'Los empleados de este departamento también han sido eliminados.' });
-  }, [departments, employees, updateDepartments, updateEmployees, toast]);
+    if (!quiet) toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+  }, [departments, employees, updateDepartments, updateEmployees, toast, t]);
 
 
   const addEmployee = useCallback((employee: Employee) => {
      if (employees.find(e => e.name.toLowerCase() === employee.name.toLowerCase())) {
-      toast({ title: 'Empleado duplicado', variant: 'destructive' });
+      toast({ title: t('duplicated_employee'), variant: 'destructive' });
       return;
     }
     const newEmployees = [...employees, employee].sort((a,b) => a.name.localeCompare(b.name));
     updateEmployees(newEmployees);
-    toast({ title: 'Empleado añadido' });
-  }, [employees, updateEmployees, toast]);
+    toast({ title: t('employee_added') });
+  }, [employees, updateEmployees, toast, t]);
 
   const removeEmployee = useCallback((employeeName: string) => {
     const newEmployees = employees.filter(e => e.name !== employeeName);
     updateEmployees(newEmployees);
-    toast({ title: 'Empleado eliminado' });
-  }, [employees, updateEmployees, toast]);
+    toast({ title: t('employee_deleted') });
+  }, [employees, updateEmployees, toast, t]);
 
 
   return { loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployees };

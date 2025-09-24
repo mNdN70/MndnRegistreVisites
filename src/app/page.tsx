@@ -1,38 +1,43 @@
+"use client";
+
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PageContainer } from "@/components/PageContainer";
 import { LogOut, Truck, User } from "lucide-react";
 import Link from "next/link";
-
-const actionCards = [
-  {
-    href: "/entrada",
-    title: "Entrada",
-    description: "Registrar una nueva visita general.",
-    icon: <User className="h-12 w-12" />,
-  },
-  {
-    href: "/entrada-transportistas",
-    title: "Entrada Transportistas",
-    description: "Registrar una entrada de transportista.",
-    icon: <Truck className="h-12 w-12" />,
-  },
-  {
-    href: "/salida",
-    title: "Salida",
-    description: "Registrar la salida de un visitante.",
-    icon: <LogOut className="h-12 w-12" />,
-  },
-];
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function Home() {
+  const { t } = useTranslation();
+
+  const actionCards = [
+    {
+      href: "/entrada",
+      title: t("entry"),
+      description: t("general_entry_description"),
+      icon: <User className="h-12 w-12" />,
+    },
+    {
+      href: "/entrada-transportistas",
+      title: t("transporter_entry"),
+      description: t("transporter_entry_description"),
+      icon: <Truck className="h-12 w-12" />,
+    },
+    {
+      href: "/salida",
+      title: t("exit"),
+      description: t("exit_description"),
+      icon: <LogOut className="h-12 w-12" />,
+    },
+  ];
+
   return (
     <PageContainer>
       <div className="text-center mb-12">
         <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
-          Bienvenido a VisitWise
+          {t('welcome_to_visitwise')}
         </h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Seleccione una opción para gestionar las visitas de la empresa de forma rápida y segura.
+          {t('main_description')}
         </p>
       </div>
 

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function ConfigPanel() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function ConfigPanel() {
     updateEmployees,
   } = useConfig();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [newDepartment, setNewDepartment] = useState("");
   const [newEmployeeName, setNewEmployeeName] = useState("");
@@ -81,7 +83,7 @@ export default function ConfigPanel() {
     a.download = `visitwise-config-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({title: "Configuración exportada"});
+    toast({title: t("config_exported")});
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,16 +99,16 @@ export default function ConfigPanel() {
               updateEmployees(data.employees);
               // This is a bit of a trick to update departments without exposing a full setter
               // First, remove all existing departments
-              departments.forEach(d => removeDepartment(d));
+              departments.forEach(d => removeDepartment(d, true)); // quiet mode
               // Then add the new ones
-              data.departments.forEach((d:string) => addDepartment(d));
-              toast({title: "Configuración importada con éxito"});
+              data.departments.forEach((d:string) => addDepartment(d, true)); // quiet mode
+              toast({title: t("config_imported")});
             } else {
               throw new Error("Formato de archivo incorrecto");
             }
           }
         } catch (error) {
-          toast({title: "Error al importar", description: "El archivo no es válido.", variant: "destructive"});
+          toast({title: t("error_importing"), description: t("invalid_file"), variant: "destructive"});
         }
       };
       reader.readAsText(file);
@@ -123,16 +125,16 @@ export default function ConfigPanel() {
       <div className="grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Departamentos</CardTitle>
+            <CardTitle>{t('departments')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
                 value={newDepartment}
                 onChange={(e) => setNewDepartment(e.target.value)}
-                placeholder="Nuevo departamento"
+                placeholder={t('new_department')}
               />
-              <Button onClick={handleAddDepartment}>Añadir</Button>
+              <Button onClick={handleAddDepartment}>{t('add')}</Button>
             </div>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
               {departments.map((dept) => (
@@ -149,26 +151,26 @@ export default function ConfigPanel() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Empleados</CardTitle>
+            <CardTitle>{t('employees')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newEmployeeName}
                 onChange={(e) => setNewEmployeeName(e.target.value)}
-                placeholder="Nombre del empleado"
+                placeholder={t('employee_name')}
                 className="flex-grow"
               />
               <Select onValueChange={setNewEmployeeDept} value={newEmployeeDept}>
                 <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Departamento" />
+                    <SelectValue placeholder={t('department')} />
                 </SelectTrigger>
                 <SelectContent>
                     {departments.map((dept) => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Button onClick={handleAddEmployee} className="w-full sm:w-auto">
-                <UserPlus className="mr-2 h-4 w-4"/> Añadir
+                <UserPlus className="mr-2 h-4 w-4"/> {t('add')}
               </Button>
             </div>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
@@ -189,11 +191,11 @@ export default function ConfigPanel() {
       </div>
        <div className="flex justify-between items-center gap-4 mt-8">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}><FileUp className="mr-2"/>Exportar</Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}><FileDown className="mr-2"/>Importar</Button>
+          <Button variant="outline" onClick={handleExport}><FileUp className="mr-2"/>{t('export')}</Button>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}><FileDown className="mr-2"/>{t('import')}</Button>
           <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden"/>
         </div>
-        <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2" />Cerrar Sesión</Button>
+        <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2" />{t('logout')}</Button>
       </div>
     </div>
   );

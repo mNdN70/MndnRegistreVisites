@@ -4,6 +4,7 @@ import type { AnyVisit } from '@/lib/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { isToday } from 'date-fns';
+import { useTranslation } from './use-translation';
 
 const VISITS_STORAGE_KEY = 'visitwise-visits';
 
@@ -11,6 +12,8 @@ export const useVisits = () => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation();
+
 
   useEffect(() => {
     try {
@@ -50,9 +53,9 @@ export const useVisits = () => {
 
   const addVisit = useCallback((visit: Omit<AnyVisit, 'entryTime' | 'exitTime'>) => {
     if (findActiveVisitByDni(visit.id)) {
-      const errorMessage = 'Ya existe una visita activa para este DNI/NIE. Debe registrar la salida antes de una nueva entrada.';
+      const errorMessage = t('duplicate_entry_detail');
       toast({
-        title: 'Entrada Duplicada',
+        title: t('duplicate_entry'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -65,11 +68,11 @@ export const useVisits = () => {
     };
     updateVisits([newVisit, ...visits]);
     toast({
-      title: 'Entrada Registrada',
-      description: `${visit.name} ha sido registrado.`,
+      title: t('entry_registered'),
+      description: t('entry_registered_detail').replace('{name}', visit.name),
     });
     return { success: true };
-  }, [visits, findActiveVisitByDni, updateVisits, toast]);
+  }, [visits, findActiveVisitByDni, updateVisits, toast, t]);
 
   const registerExit = useCallback((dni: string) => {
     const visitIndex = visits.findIndex(v => 
@@ -79,9 +82,9 @@ export const useVisits = () => {
     );
 
     if (visitIndex === -1) {
-      const errorMessage = 'No se encontró una visita activa para este DNI/NIE registrada hoy.';
+      const errorMessage = t('no_active_visit_today');
       toast({
-        title: 'Error al Registrar Salida',
+        title: t('exit_registration_error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -95,11 +98,11 @@ export const useVisits = () => {
     updateVisits(updatedVisits);
 
     toast({
-      title: 'Salida Registrada',
-      description: `Se ha registrado la salida para ${visit.name}.`,
+      title: t('exit_registered'),
+      description: t('exit_registered_detail').replace('{name}', visit.name),
     });
     return { success: true };
-  }, [visits, updateVisits, toast]);
+  }, [visits, updateVisits, toast, t]);
 
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
@@ -112,7 +115,7 @@ export const useVisits = () => {
   const createCSV = (data: AnyVisit[], filename: string) => {
     if (data.length === 0) {
       toast({
-        title: 'No hay datos para exportar',
+        title: t('no_data_to_export'),
         variant: 'destructive'
       });
       return;
@@ -153,16 +156,16 @@ export const useVisits = () => {
     link.click();
     document.body.removeChild(link);
 
-    toast({ title: 'Exportación completada' });
+    toast({ title: t('export_completed') });
   };
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [toast]);
+  }, [toast, t]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
-  }, [getActiveVisits, toast]);
+  }, [getActiveVisits, toast, t]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV };
