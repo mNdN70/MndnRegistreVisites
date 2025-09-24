@@ -56,8 +56,7 @@ export const useVisits = () => {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
             where('id', '==', visit.id.toLowerCase()),
-            where('exitTime', '==', null),
-            limit(1)
+            where('exitTime', '==', null)
         );
         const activeVisitSnapshot = await getDocs(activeVisitQuery);
 
@@ -120,13 +119,12 @@ export const useVisits = () => {
     const q = query(
       collection(db, VISITS_COLLECTION),
       where('id', '==', dni.toLowerCase()),
-      where('exitTime', '==', null),
-      orderBy('entryTime', 'desc'),
-      limit(1)
+      where('exitTime', '==', null)
     );
     
     try {
       const querySnapshot = await getDocs(q);
+      
       if (querySnapshot.empty) {
         const errorMessage = t('no_active_visit_today');
         toast({
@@ -137,17 +135,21 @@ export const useVisits = () => {
         return { success: false, message: errorMessage };
       }
 
-      const visitDoc = querySnapshot.docs[0];
+      // Find the most recent visit if there are multiple active ones (shouldn't happen with current logic, but good practice)
+      const visits = querySnapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
+      visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+      const latestVisitDoc = visits[0];
+
       const exitTime = new Date().toISOString();
-      await updateDoc(doc(db, VISITS_COLLECTION, visitDoc.id), {
+      await updateDoc(doc(db, VISITS_COLLECTION, latestVisitDoc.docId), {
         exitTime: exitTime,
       });
       
-      setVisits(prevVisits => prevVisits.map(v => v.docId === visitDoc.id ? {...v, exitTime: exitTime} : v))
+      setVisits(prevVisits => prevVisits.map(v => v.docId === latestVisitDoc.docId ? {...v, exitTime: exitTime} : v))
 
       toast({
         title: t('exit_registered'),
-        description: t('exit_registered_detail').replace('{name}', visitDoc.data().name),
+        description: t('exit_registered_detail').replace('{name}', latestVisitDoc.name),
       });
       return { success: true };
     } catch(error) {
@@ -214,7 +216,7 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [createCSV]);
+  }, [createCSV, t]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
