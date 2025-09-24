@@ -51,7 +51,7 @@ export const useVisits = () => {
     fetchVisits();
   }, [fetchVisits]);
 
-  const findActiveVisitByDni = useCallback(async (dni: string) => {
+  const findActiveVisitByDni = useCallback(async (dni: string): Promise<boolean> => {
     const q = query(
       collection(db, VISITS_COLLECTION),
       where('id', '==', dni.toLowerCase()),
@@ -63,7 +63,8 @@ export const useVisits = () => {
   }, []);
 
   const addVisit = useCallback(async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
-    if (await findActiveVisitByDni(visit.id)) {
+    const isActive = await findActiveVisitByDni(visit.id);
+    if (isActive) {
       const errorMessage = t('duplicate_entry_detail');
       toast({
         title: t('duplicate_entry'),
@@ -72,6 +73,7 @@ export const useVisits = () => {
       });
       return { success: false, message: errorMessage };
     }
+    
     try {
       const baseVisitData = {
         id: visit.id.toLowerCase(),
@@ -205,7 +207,7 @@ export const useVisits = () => {
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-t' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -220,7 +222,7 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [toast, t, createCSV]);
+  }, [toast, t]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
