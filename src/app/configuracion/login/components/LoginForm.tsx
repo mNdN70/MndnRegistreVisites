@@ -55,15 +55,13 @@ export default function LoginForm() {
 
       if (!querySnapshot.empty) {
         toast({ title: t('access_granted') });
-        const token = Math.random().toString(36).substring(2);
         
-        // This is the key change: we store the token and use it for one-time navigation.
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('auth_token', token);
+          sessionStorage.setItem('auth_token', 'true');
         }
 
         const redirectTo = searchParams.get('redirectTo') || '/configuracion/panel';
-        router.push(`${redirectTo}?token=${token}`);
+        router.push(redirectTo);
       } else {
         toast({
           title: t('access_denied'),

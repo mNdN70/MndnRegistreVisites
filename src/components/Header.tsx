@@ -18,6 +18,7 @@ export function Header() {
   const pathname = usePathname();
   const { t, setLanguage } = useTranslation();
 
+  // Mobile nav links need the full path to login
   const navLinks = [
     { href: "/", label: t('home') },
     { href: "/configuracion/login?redirectTo=/activos", label: t('active_visits') },
@@ -48,15 +49,15 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuItem asChild>
-                        <Link href="/configuracion/login?redirectTo=/activos">{t('active_visits')}</Link>
+                        <Link href="/activos">{t('active_visits')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link href="/configuracion/login?redirectTo=/registros">{t('consult_records')}</Link>
+                        <Link href="/registros">{t('consult_records')}</Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             <Link 
-              href="/configuracion/login?redirectTo=/configuracion/panel" 
+              href="/configuracion/panel" 
               className={cn(
                     "text-lg font-medium text-muted-foreground transition-colors hover:text-foreground",
                     pathname.startsWith("/configuracion") && "text-foreground"

@@ -84,7 +84,7 @@
     "add": "Add",
     "employees": "Employees",
     "employee_name": "Employee name",
-    "logout": "Logout",
+    "logout": "Exit",
     "users": "Users",
     "users_description": "Manage users with access to the configuration panel.",
     "add_user": "Add User",

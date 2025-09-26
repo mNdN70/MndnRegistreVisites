@@ -5,27 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import ConfigPanel from "./components/ConfigPanel";
 import { useTranslation } from "@/hooks/use-translation";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function ConfigPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isAuthorized, setIsAuthorized] = useState(false);
   
   useEffect(() => {
-    const token = searchParams.get('token');
-    // We need to check for window because sessionStorage is not available on the server.
     if (typeof window !== 'undefined') {
         const storedToken = sessionStorage.getItem('auth_token');
-        if (token && storedToken && token === storedToken) {
+        if (storedToken === 'true') {
             setIsAuthorized(true);
-            sessionStorage.removeItem('auth_token'); // Consume the token
         } else {
-            router.push('/');
+            router.push('/configuracion/login?redirectTo=/configuracion/panel');
         }
     }
-  }, [searchParams, router]);
+  }, [router]);
 
   if (!isAuthorized) {
     // Render nothing or a loader while we check auth and redirect.

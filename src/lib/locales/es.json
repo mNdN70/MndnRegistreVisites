@@ -84,7 +84,7 @@
     "add": "Añadir",
     "employees": "Empleados",
     "employee_name": "Nombre del empleado",
-    "logout": "Cerrar Sesión",
+    "logout": "Salir",
     "users": "Usuarios",
     "users_description": "Gestionar los usuarios con acceso al panel de configuración.",
     "add_user": "Añadir Usuario",

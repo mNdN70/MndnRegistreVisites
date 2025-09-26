@@ -4,7 +4,7 @@ import { useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, UserPlus, KeyRound } from "lucide-react";
+import { Trash2, UserPlus, KeyRound, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,7 +73,14 @@ export default function ConfigPanel() {
       setNewUsername("");
       setNewPassword("");
     }
-  }
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('auth_token');
+    }
+    router.push('/');
+  };
   
   return (
     <div className="space-y-8">
@@ -183,6 +190,12 @@ export default function ConfigPanel() {
             </ul>
           </CardContent>
         </Card>
+        <div className="flex justify-end">
+            <Button onClick={handleLogout} variant="outline">
+                <LogOut className="mr-2 h-4 w-4" />
+                {t('logout')}
+            </Button>
+        </div>
     </div>
   );
 }
