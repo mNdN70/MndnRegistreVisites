@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -19,18 +18,12 @@ export function Header() {
   const pathname = usePathname();
   const { t, setLanguage } = useTranslation();
 
-  const mainNavLinks = [
+  const navLinks = [
     { href: "/", label: t('home') },
+    { href: "/configuracion/login?redirectTo=/activos", label: t('active_visits') },
+    { href: "/configuracion/login?redirectTo=/registros", label: t('consult_records') },
     { href: "/configuracion/login?redirectTo=/configuracion/panel", label: t('configuration') },
   ];
-
-  const consultesLinks = [
-      { href: "/configuracion/login?redirectTo=/activos", label: t('active_visits') },
-      { href: "/configuracion/login?redirectTo=/registros", label: t('consult_records') },
-  ]
-
-  const allLinks = [...mainNavLinks.slice(0,1), ...consultesLinks, ...mainNavLinks.slice(1)];
-
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
     <Link
@@ -66,7 +59,12 @@ export function Header() {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <NavLink href="/configuracion/login?redirectTo=/configuracion/panel" label={t('configuration')} />
+            <Link 
+              href="/configuracion/login?redirectTo=/configuracion/panel" 
+              className="text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t('configuration')}
+            </Link>
           </nav>
         </div>
         
@@ -106,7 +104,7 @@ export function Header() {
                     >
                     <span className="sr-only">Menadiona</span>
                     </Link>
-                    {allLinks.map((link) => (
+                    {navLinks.map((link) => (
                       <NavLink key={link.href} {...link} />
                     ))}
                 </nav>
