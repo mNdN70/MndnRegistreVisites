@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, BookOpen } from "lucide-react";
+import Link from "next/link";
 
 export default function ConsultasPage() {
   const { t } = useTranslation();
@@ -48,10 +49,14 @@ export default function ConsultasPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => router.push('/configuracion/login?redirectTo=/registros')}>
-                    <BookOpen />
-                    {t('consult_records')}
-                </Button>
+                <Link href="/registros" passHref>
+                  <Button asChild>
+                    <a>
+                      <BookOpen />
+                      {t('consult_records')}
+                    </a>
+                  </Button>
+                </Link>
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut />
                     {t('exit')}
