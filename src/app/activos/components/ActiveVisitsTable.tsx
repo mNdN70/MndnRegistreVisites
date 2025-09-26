@@ -44,16 +44,17 @@ export default function ActiveVisitsTable() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t('name')}</TableHead>
+                <TableHead>{t('dni_nie')}</TableHead>
                 <TableHead className="hidden md:table-cell">{t('company')}</TableHead>
                 <TableHead>{t('entry_time')}</TableHead>
                 <TableHead className="hidden sm:table-cell">{t('visiting')}</TableHead>
-                <TableHead>{t('dni_nie')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {activeVisits.map((visit) => (
                 <TableRow key={visit.docId}>
                   <TableCell className="font-medium">{visit.name}</TableCell>
+                  <TableCell>{visit.id}</TableCell>
                   <TableCell className="hidden md:table-cell">{visit.company}</TableCell>
                   <TableCell>
                     <div>{format(new Date(visit.entryTime), "p", { locale: locales[language] })}</div>
@@ -62,7 +63,6 @@ export default function ActiveVisitsTable() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{visit.personToVisit}</TableCell>
-                  <TableCell>{visit.id}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
