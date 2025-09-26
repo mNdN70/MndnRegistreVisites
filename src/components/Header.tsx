@@ -21,12 +21,12 @@ export function Header() {
 
   const mainNavLinks = [
     { href: "/", label: t('home') },
-    { href: "/configuracion/panel", label: t('configuration') },
+    { href: "/configuracion/login?redirectTo=/configuracion/panel", label: t('configuration') },
   ];
 
   const consultesLinks = [
-      { href: "/activos", label: t('active_visits') },
-      { href: "/registros", label: t('consult_records') },
+      { href: "/configuracion/login?redirectTo=/activos", label: t('active_visits') },
+      { href: "/configuracion/login?redirectTo=/registros", label: t('consult_records') },
   ]
 
   const allLinks = [...mainNavLinks.slice(0,1), ...consultesLinks, ...mainNavLinks.slice(1)];
@@ -59,14 +59,14 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuItem asChild>
-                        <Link href="/activos">{t('active_visits')}</Link>
+                        <Link href="/configuracion/login?redirectTo=/activos">{t('active_visits')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link href="/registros">{t('consult_records')}</Link>
+                        <Link href="/configuracion/login?redirectTo=/registros">{t('consult_records')}</Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <NavLink href="/configuracion/panel" label={t('configuration')} />
+            <NavLink href="/configuracion/login?redirectTo=/configuracion/panel" label={t('configuration')} />
           </nav>
         </div>
         
