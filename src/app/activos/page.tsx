@@ -4,9 +4,20 @@ import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ActiveVisitsTable from "./components/ActiveVisitsTable";
 import { useTranslation } from "@/hooks/use-translation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ActiveVisitsPage() {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  useEffect(() => {
+    const isAuthenticated = sessionStorage.getItem("config-auth") === "true";
+    if (!isAuthenticated) {
+      router.replace("/configuracion/login");
+    }
+  }, [router]);
+
 
   return (
     <PageContainer>
