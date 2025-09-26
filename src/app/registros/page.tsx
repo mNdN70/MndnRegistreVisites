@@ -14,20 +14,23 @@ export default function RecordsPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   
   useEffect(() => {
+    // This is a one-time token validation.
     const token = searchParams.get('token');
-    const storedToken = sessionStorage.getItem('auth_token');
-
-    if (token && storedToken && token === storedToken) {
-        setIsAuthorized(true);
-        // This is a one-time token. Invalidate it after use.
-        sessionStorage.removeItem('auth_token');
-    } else {
-        router.push('/');
+    if (typeof window !== 'undefined') {
+        const storedToken = sessionStorage.getItem('auth_token');
+        if (token && storedToken && token === storedToken) {
+            setIsAuthorized(true);
+            // The token is consumed immediately after validation.
+            sessionStorage.removeItem('auth_token');
+        } else {
+            // If tokens don't match or don't exist, redirect.
+            router.push('/');
+        }
     }
   }, [searchParams, router]);
 
   if (!isAuthorized) {
-    // You can show a loader or a blank page while redirecting
+    // Show a loader or a blank page while the effect runs and redirects.
     return null;
   }
 
