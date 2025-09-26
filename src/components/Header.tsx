@@ -4,26 +4,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Globe } from "lucide-react";
+import { Menu, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
   const pathname = usePathname();
-  const { setLanguage } = useTranslation();
+  const { t, setLanguage } = useTranslation();
 
-  const navLinks = [
-    { href: "/", label: "Inici" },
-    { href: "/activos", label: "Visites Actives" },
-    { href: "/registros", label: "Consultar Registres" },
-    { href: "/configuracion/panel", label: "Configuració" },
+  const mainNavLinks = [
+    { href: "/", label: t('home') },
+    { href: "/configuracion/panel", label: t('configuration') },
   ];
+
+  const consultesLinks = [
+      { href: "/activos", label: t('active_visits') },
+      { href: "/registros", label: t('consult_records') },
+  ]
+
+  const allLinks = [...mainNavLinks.slice(0,1), ...consultesLinks, ...mainNavLinks.slice(1)];
+
 
   const NavLink = ({ href, label }: { href: string; label: string }) => (
     <Link
@@ -45,9 +52,21 @@ export function Header() {
             <span className="font-headline text-2xl font-bold">Menadiona</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
-            {navLinks.map((link) => (
-              <NavLink key={link.href} {...link} />
-            ))}
+             <NavLink href="/" label={t('home')} />
+            <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none">
+                    {t('consultes')} <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem asChild>
+                        <Link href="/activos">{t('active_visits')}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/registros">{t('consult_records')}</Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <NavLink href="/configuracion/panel" label={t('configuration')} />
           </nav>
         </div>
         
@@ -87,8 +106,8 @@ export function Header() {
                     >
                     <span className="sr-only">Menadiona</span>
                     </Link>
-                    {navLinks.map((link) => (
-                    <NavLink key={link.href} {...link} />
+                    {allLinks.map((link) => (
+                      <NavLink key={link.href} {...link} />
                     ))}
                 </nav>
                 </SheetContent>
