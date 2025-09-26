@@ -25,7 +25,7 @@ export default function ConfigPage() {
             router.push('/');
         }
     }
-  }, [searchParams, router]);
+  }, [search_params, router]);
 
   if (!isAuthorized) {
     // Render nothing or a loader while we check auth and redirect.
