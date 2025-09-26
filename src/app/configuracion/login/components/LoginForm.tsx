@@ -18,13 +18,13 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
-
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 const getFormSchema = (t: (key: string) => string) => z.object({
   username: z.string().min(1, t('username_required')),
   password: z.string().min(1, t('password_required')),
 });
-
 
 export default function LoginForm() {
   const router = useRouter();
@@ -41,24 +41,32 @@ export default function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // Hardcoded credentials for simplicity
-    if (values.username === "admin" && values.password === "admin") {
-      try {
+
+    try {
+      const q = query(
+        collection(db, "users"),
+        where("username", "==", values.username),
+        where("password", "==", values.password)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
         sessionStorage.setItem("config-auth", "true");
         toast({ title: t('access_granted') });
         router.push("/configuracion/panel");
-      } catch (error) {
-        toast({ title: "Error", description: t('login_error'), variant: "destructive" });
+      } else {
+        toast({
+          title: t('access_denied'),
+          description: t('wrong_user_or_pass'),
+          variant: "destructive",
+        });
         setIsSubmitting(false);
       }
-    } else {
-      toast({
-        title: t('access_denied'),
-        description: t('wrong_user_or_pass'),
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({ title: "Error", description: t('login_error'), variant: "destructive" });
       setIsSubmitting(false);
     }
   }

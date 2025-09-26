@@ -3,8 +3,8 @@
 import { useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, UserPlus, LogOut } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Trash2, UserPlus, LogOut, KeyRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,10 +22,13 @@ export default function ConfigPanel() {
   const {
     departments,
     employees,
+    users,
     addDepartment,
     removeDepartment,
     addEmployee,
     removeEmployee,
+    addUser,
+    removeUser,
     loading,
   } = useConfig();
 
@@ -34,6 +37,8 @@ export default function ConfigPanel() {
   const [newDepartment, setNewDepartment] = useState("");
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeeDept, setNewEmployeeDept] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem("config-auth") === "true";
@@ -44,10 +49,13 @@ export default function ConfigPanel() {
 
   if (loading) {
     return (
+      <div className="space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
             <Skeleton className="h-96 w-full" />
             <Skeleton className="h-96 w-full" />
         </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
     );
   }
 
@@ -66,6 +74,14 @@ export default function ConfigPanel() {
     }
   };
   
+  const handleAddUser = () => {
+    if(newUsername.trim() && newPassword.trim()){
+      addUser({ username: newUsername.trim(), password: newPassword.trim() });
+      setNewUsername("");
+      setNewPassword("");
+    }
+  }
+
   const handleLogout = () => {
     sessionStorage.removeItem("config-auth");
     router.push("/");
@@ -140,6 +156,46 @@ export default function ConfigPanel() {
           </CardContent>
         </Card>
       </div>
+
+       <Card>
+          <CardHeader>
+            <CardTitle>{t('users')}</CardTitle>
+            <CardDescription>{t('users_description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder={t('username')}
+                className="flex-grow"
+              />
+              <Input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={t('password')}
+                type="password"
+                className="flex-grow"
+              />
+              <Button onClick={handleAddUser} className="w-full sm:w-auto">
+                <KeyRound className="mr-2 h-4 w-4"/> {t('add_user')}
+              </Button>
+            </div>
+            <ul className="space-y-2 max-h-60 overflow-y-auto">
+              {users.map((user) => (
+                <li key={user.id} className="flex justify-between items-center p-2 border rounded-md">
+                  <div>
+                    <p>{user.username}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => removeUser(user.id!)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
        <div className="flex justify-end items-center gap-4 mt-8">
         <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2" />{t('logout')}</Button>
       </div>
