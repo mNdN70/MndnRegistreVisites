@@ -5,19 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import RecordsTable from "./components/RecordsTable";
 import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useVisits } from "@/hooks/use-visits";
 
 export default function RecordsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('auth_token');
-    }
-    router.push('/');
-  };
+  const { exportToCSV, getFilteredVisits } = useVisits();
 
   return (
     <PageContainer>
@@ -31,9 +26,13 @@ export default function RecordsPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleLogout}>
-                    <LogOut />
-                    {t('exit')}
+                <Button onClick={() => exportToCSV(getFilteredVisits(), 'registros.csv')}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('export_to_csv')}
+                </Button>
+                <Button variant="outline" onClick={() => router.back()}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('back')}
                 </Button>
               </div>
           </div>

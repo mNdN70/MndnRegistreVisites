@@ -129,5 +129,6 @@
     "error_adding_user": "No se pudo añadir el usuario.",
     "cannot_delete_last_user": "No se puede eliminar el último usuario.",
     "user_deleted": "Usuario eliminado.",
-    "error_deleting_user": "No se pudo eliminar el usuario."
+    "error_deleting_user": "No se pudo eliminar el usuario.",
+    "back": "Volver"
 }

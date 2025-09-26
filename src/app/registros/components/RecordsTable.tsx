@@ -11,12 +11,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
+import { format } from "date-fns";
 import { es, ca, enUS } from "date-fns/locale";
-import { useState } from "react";
-import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -25,31 +23,15 @@ import { useTranslation } from "@/hooks/use-translation";
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function RecordsTable() {
-  const { getAllVisits, exportToCSV, loading } = useVisits();
-  const allVisits = getAllVisits();
+  const { 
+    loading, 
+    date, 
+    setDate, 
+    getFilteredVisits 
+  } = useVisits();
+
+  const filteredVisits = getFilteredVisits();
   const { t, language } = useTranslation();
-
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: startOfDay(new Date()),
-    to: endOfDay(new Date()),
-  });
-
-  const filteredVisits = allVisits.filter((visit) => {
-    if (!date?.from) return true;
-    const entryDate = new Date(visit.entryTime);
-    const toDate = date.to ?? date.from;
-    return isWithinInterval(entryDate, { start: startOfDay(date.from), end: endOfDay(toDate) });
-  });
-
-  const handleExport = () => {
-    if (filteredVisits.length === 0) {
-      alert(t('no_data_to_export'));
-      return;
-    }
-    const from = date?.from ? format(date.from, 'yyyy-MM-dd') : 'inicio';
-    const to = date?.to ? format(date.to, 'yyyy-MM-dd') : from;
-    exportToCSV(filteredVisits, `registros_visitas_${from}_a_${to}.csv`);
-  };
 
   if (loading) {
     return (
@@ -64,7 +46,7 @@ export default function RecordsTable() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row justify-start items-center mb-4 gap-4">
         <div className="grid gap-2">
            <Popover>
             <PopoverTrigger asChild>
@@ -104,10 +86,6 @@ export default function RecordsTable() {
             </PopoverContent>
           </Popover>
         </div>
-        <Button onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          {t('export_to_csv')}
-        </Button>
       </div>
       {filteredVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">

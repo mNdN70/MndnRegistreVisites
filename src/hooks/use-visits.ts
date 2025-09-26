@@ -16,6 +16,8 @@ import {
   updateDoc,
   doc
 } from 'firebase/firestore';
+import { DateRange } from 'react-day-picker';
+import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -24,6 +26,10 @@ export const useVisits = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
@@ -135,7 +141,6 @@ export const useVisits = () => {
         return { success: false, message: errorMessage };
       }
 
-      // Find the most recent visit if there are multiple active ones (shouldn't happen with current logic, but good practice)
       const visits = querySnapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
       visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
       const latestVisitDoc = visits[0];
@@ -166,6 +171,15 @@ export const useVisits = () => {
   const getAllVisits = useCallback(() => {
     return [...visits].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits]);
+  
+  const getFilteredVisits = useCallback(() => {
+    return visits.filter((visit) => {
+      if (!date?.from) return true;
+      const entryDate = new Date(visit.entryTime);
+      const toDate = date.to ?? date.from;
+      return isWithinInterval(entryDate, { start: startOfDay(date.from), end: endOfDay(toDate) });
+    });
+  }, [visits, date]);
   
   const createCSV = (data: AnyVisit[], filename: string) => {
     if (data.length === 0) {
@@ -201,7 +215,7 @@ export const useVisits = () => {
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-t' });
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -223,5 +237,5 @@ export const useVisits = () => {
   }, [getActiveVisits, createCSV]);
 
 
-  return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV };
+  return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
 };
