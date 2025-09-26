@@ -15,7 +15,7 @@ export default function ConfigPage() {
   
   useEffect(() => {
     const token = searchParams.get('token');
-     // We need to check for window because sessionStorage is not available on the server.
+    // We need to check for window because sessionStorage is not available on the server.
     if (typeof window !== 'undefined') {
         const storedToken = sessionStorage.getItem('auth_token');
         if (token && storedToken && token === storedToken) {
@@ -25,7 +25,7 @@ export default function ConfigPage() {
             router.push('/');
         }
     }
-  }, [search_params, router]);
+  }, [searchParams, router]);
 
   if (!isAuthorized) {
     // Render nothing or a loader while we check auth and redirect.

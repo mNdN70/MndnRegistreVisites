@@ -15,7 +15,7 @@ export default function RecordsPage() {
   
   useEffect(() => {
     const token = searchParams.get('token');
-     // We need to check for window because sessionStorage is not available on the server.
+    // We need to check for window because sessionStorage is not available on the server.
     if (typeof window !== 'undefined') {
         const storedToken = sessionStorage.getItem('auth_token');
         if (token && storedToken && token === storedToken) {
