@@ -24,6 +24,13 @@ export function Header() {
     { href: "/configuracion/panel", label: t('configuration') },
   ];
 
+  const getHref = (href: string) => {
+    if (href === "/") {
+        return "/";
+    }
+    return `/configuracion/login?redirectTo=${href}`;
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -35,7 +42,7 @@ export function Header() {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                href={link.href.startsWith('/') ? `/configuracion/login?redirectTo=${link.href}`: link.href}
+                href={getHref(link.href)}
                 className={cn(
                   "text-muted-foreground transition-colors hover:text-foreground",
                   (pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))) && "text-foreground"
@@ -86,7 +93,7 @@ export function Header() {
                     {navLinks.map((link) => (
                       <Link
                         key={link.href}
-                        href={link.href.startsWith('/') ? `/configuracion/login?redirectTo=${link.href}`: link.href}
+                        href={getHref(link.href)}
                         className={cn(
                             "text-muted-foreground transition-colors hover:text-foreground",
                             pathname === link.href && "text-foreground"
