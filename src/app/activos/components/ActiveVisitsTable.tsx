@@ -27,7 +27,6 @@ export default function ActiveVisitsTable() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-12 w-40 ml-auto" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -37,12 +36,6 @@ export default function ActiveVisitsTable() {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button onClick={exportActiveVisitsToCSV}>
-          <Download className="mr-2 h-4 w-4" />
-          {t('export_to_csv')}
-        </Button>
-      </div>
       {activeVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">{t('no_active_visits')}</p>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Globe, ChevronDown } from "lucide-react";
+import { Menu, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -18,12 +18,10 @@ export function Header() {
   const pathname = usePathname();
   const { t, setLanguage } = useTranslation();
 
-  // Mobile nav links need the full path to login
   const navLinks = [
     { href: "/", label: t('home') },
-    { href: "/configuracion/login?redirectTo=/activos", label: t('active_visits') },
-    { href: "/configuracion/login?redirectTo=/registros", label: t('consult_records') },
-    { href: "/configuracion/login?redirectTo=/configuracion/panel", label: t('configuration') },
+    { href: "/consultas", label: t('consultes') },
+    { href: "/configuracion/panel", label: t('configuration') },
   ];
 
   return (
@@ -34,37 +32,18 @@ export function Header() {
             <span className="font-headline text-2xl font-bold">Menadiona</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
-             <Link
-                href="/"
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href.startsWith('/') ? `/configuracion/login?redirectTo=${link.href}`: link.href}
                 className={cn(
-                    "text-muted-foreground transition-colors hover:text-foreground",
-                    pathname === "/" && "text-foreground"
+                  "text-muted-foreground transition-colors hover:text-foreground",
+                  (pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))) && "text-foreground"
                 )}
-            >
-                {t('home')}
-            </Link>
-            <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none">
-                    {t('consultes')} <ChevronDown className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuItem asChild>
-                        <Link href="/activos">{t('active_visits')}</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                        <Link href="/registros">{t('consult_records')}</Link>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <Link 
-              href="/configuracion/panel" 
-              className={cn(
-                    "text-lg font-medium text-muted-foreground transition-colors hover:text-foreground",
-                    pathname.startsWith("/configuracion") && "text-foreground"
-                )}
-            >
-              {t('configuration')}
-            </Link>
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
         
@@ -107,7 +86,7 @@ export function Header() {
                     {navLinks.map((link) => (
                       <Link
                         key={link.href}
-                        href={link.href}
+                        href={link.href.startsWith('/') ? `/configuracion/login?redirectTo=${link.href}`: link.href}
                         className={cn(
                             "text-muted-foreground transition-colors hover:text-foreground",
                             pathname === link.href && "text-foreground"
