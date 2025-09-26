@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
@@ -28,6 +28,7 @@ const getFormSchema = (t: (key: string) => string) => z.object({
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useTranslation();
@@ -53,9 +54,10 @@ export default function LoginForm() {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        sessionStorage.setItem("config-auth", "true");
         toast({ title: t('access_granted') });
-        router.push("/configuracion/panel");
+        const token = Math.random().toString(36).substring(2);
+        const redirectTo = searchParams.get('redirectTo') || '/configuracion/panel';
+        router.push(`${redirectTo}?token=${token}`);
       } else {
         toast({
           title: t('access_denied'),
