@@ -14,7 +14,8 @@ import {
   orderBy, 
   limit,
   updateDoc,
-  doc
+  doc,
+  writeBatch
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
@@ -40,7 +41,38 @@ export const useVisits = () => {
         ...doc.data(),
         docId: doc.id,
       })) as AnyVisit[];
-      setVisits(visitsData);
+
+      const now = new Date();
+      const batch = writeBatch(db);
+      let changesMade = false;
+
+      const updatedVisitsData = visitsData.map(visit => {
+        if (visit.exitTime === null) {
+            const entryTime = new Date(visit.entryTime);
+            const hoursDiff = (now.getTime() - entryTime.getTime()) / (1000 * 60 * 60);
+            if (hoursDiff > 10) {
+                const exitTime = new Date(entryTime.getTime() + 10 * 60 * 60 * 1000);
+                const visitDocRef = doc(db, VISITS_COLLECTION, visit.docId!);
+                batch.update(visitDocRef, {
+                    exitTime: exitTime.toISOString(),
+                    autoExit: true,
+                });
+                changesMade = true;
+                return {
+                    ...visit,
+                    exitTime: exitTime.toISOString(),
+                    autoExit: true,
+                };
+            }
+        }
+        return visit;
+      });
+
+      if (changesMade) {
+        await batch.commit();
+      }
+
+      setVisits(updatedVisitsData);
     } catch (error) {
       console.error('Error reading from Firestore', error);
       toast({
@@ -86,6 +118,7 @@ export const useVisits = () => {
         privacyPolicyAccepted: visit.privacyPolicyAccepted,
         entryTime: new Date().toISOString(),
         exitTime: null,
+        autoExit: false,
       };
 
       let newVisit: Omit<AnyVisit, 'docId'>;

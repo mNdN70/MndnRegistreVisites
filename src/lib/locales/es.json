@@ -33,6 +33,7 @@
     "status": "Estado",
     "finished": "Finalizada",
     "active": "Activa",
+    "auto_exit": "Salida automática",
     "general_entry_title": "Registro de Entrada General",
     "general_entry_card_description": "Por favor, complete todos los campos requeridos.",
     "dni_nie": "DNI / NIE",

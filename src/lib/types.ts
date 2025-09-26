@@ -9,6 +9,7 @@ export interface BaseVisit {
   entryTime: string; // ISO string
   exitTime: string | null; // ISO string or null
   privacyPolicyAccepted: boolean;
+  autoExit?: boolean;
 }
 
 export interface Visit extends BaseVisit {

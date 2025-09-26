@@ -33,6 +33,7 @@
     "status": "Status",
     "finished": "Finished",
     "active": "Active",
+    "auto_exit": "Auto Exit",
     "general_entry_title": "General Entry Registration",
     "general_entry_card_description": "Please complete all required fields.",
     "dni_nie": "ID",

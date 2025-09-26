@@ -117,7 +117,9 @@ export default function RecordsTable() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{visit.personToVisit}</TableCell>
                   <TableCell>
-                    {visit.exitTime ? (
+                    {visit.autoExit ? (
+                        <Badge variant="destructive">{t('auto_exit')}</Badge>
+                    ) : visit.exitTime ? (
                       <Badge variant="outline">{t('finished')}</Badge>
                     ) : (
                       <Badge variant="default" className="bg-primary">{t('active')}</Badge>
