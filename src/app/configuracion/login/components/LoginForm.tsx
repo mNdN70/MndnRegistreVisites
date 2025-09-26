@@ -56,6 +56,11 @@ export default function LoginForm() {
       if (!querySnapshot.empty) {
         toast({ title: t('access_granted') });
         const token = Math.random().toString(36).substring(2);
+        
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('auth_token', token);
+        }
+
         const redirectTo = searchParams.get('redirectTo') || '/configuracion/panel';
         router.push(`${redirectTo}?token=${token}`);
       } else {
