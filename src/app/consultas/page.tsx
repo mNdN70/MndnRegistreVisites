@@ -50,11 +50,9 @@ export default function ConsultasPage() {
               </div>
               <div className="flex gap-2">
                 <Link href="/registros" passHref>
-                  <Button asChild>
-                    <a>
-                      <BookOpen />
-                      {t('consult_records')}
-                    </a>
+                  <Button>
+                    <BookOpen />
+                    {t('consult_records')}
                   </Button>
                 </Link>
                 <Button variant="outline" onClick={handleLogout}>
