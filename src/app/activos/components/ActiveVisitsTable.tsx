@@ -47,7 +47,7 @@ export default function ActiveVisitsTable() {
                 <TableHead className="hidden md:table-cell">{t('company')}</TableHead>
                 <TableHead>{t('entry_time')}</TableHead>
                 <TableHead className="hidden sm:table-cell">{t('visiting')}</TableHead>
-                <TableHead>{t('type')}</TableHead>
+                <TableHead>{t('dni_nie')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -62,11 +62,7 @@ export default function ActiveVisitsTable() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{visit.personToVisit}</TableCell>
-                  <TableCell>
-                    <Badge variant={visit.type === 'transporter' ? 'secondary' : 'default'}>
-                      {visit.type === 'transporter' ? t('transporter') : t('general')}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{visit.id}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
