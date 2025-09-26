@@ -7,12 +7,14 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, BookOpen } from "lucide-react";
+import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
+import { useVisits } from "@/hooks/use-visits";
 
 export default function ConsultasPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { exportActiveVisitsToCSV } = useVisits();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
@@ -55,6 +57,10 @@ export default function ConsultasPage() {
                     {t('consult_records')}
                   </Button>
                 </Link>
+                <Button onClick={exportActiveVisitsToCSV}>
+                    <Download />
+                    {t('export_to_csv')}
+                </Button>
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut />
                     {t('exit')}

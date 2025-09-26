@@ -10,8 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
 import { es, ca, enUS } from "date-fns/locale";
@@ -20,7 +18,7 @@ import { useTranslation } from "@/hooks/use-translation";
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function ActiveVisitsTable() {
-  const { getActiveVisits, exportActiveVisitsToCSV, loading } = useVisits();
+  const { getActiveVisits, loading } = useVisits();
   const activeVisits = getActiveVisits();
   const { t, language } = useTranslation();
 
@@ -36,12 +34,6 @@ export default function ActiveVisitsTable() {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-          <Button onClick={exportActiveVisitsToCSV} disabled={activeVisits.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              {t('export_to_csv')}
-          </Button>
-      </div>
       {activeVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">{t('no_active_visits')}</p>
