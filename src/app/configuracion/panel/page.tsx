@@ -19,6 +19,7 @@ export default function ConfigPage() {
     
     if (token && storedToken && token === storedToken) {
         setIsAuthorized(true);
+        // This is a one-time token. Invalidate it after use.
         sessionStorage.removeItem('auth_token');
     } else {
         router.push('/');
@@ -26,6 +27,7 @@ export default function ConfigPage() {
   }, [searchParams, router]);
 
   if (!isAuthorized) {
+    // You can show a loader or a blank page while redirecting
     return null;
   }
   

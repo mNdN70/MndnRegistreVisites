@@ -19,13 +19,15 @@ export default function ActiveVisitsPage() {
 
     if (token && storedToken && token === storedToken) {
         setIsAuthorized(true);
-        sessionStorage.removeItem('auth_token'); // Invalidate the token
+        // This is a one-time token. Invalidate it after use.
+        sessionStorage.removeItem('auth_token'); 
     } else {
         router.push('/');
     }
   }, [searchParams, router]);
 
   if (!isAuthorized) {
+    // You can show a loader or a blank page while redirecting
     return null; 
   }
 

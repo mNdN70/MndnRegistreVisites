@@ -25,18 +25,6 @@ export function Header() {
     { href: "/configuracion/login?redirectTo=/configuracion/panel", label: t('configuration') },
   ];
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => (
-    <Link
-      href={href}
-      className={cn(
-        "text-muted-foreground transition-colors hover:text-foreground",
-        pathname === href && "text-foreground"
-      )}
-    >
-      {label}
-    </Link>
-  );
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -45,7 +33,15 @@ export function Header() {
             <span className="font-headline text-2xl font-bold">Menadiona</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
-             <NavLink href="/" label={t('home')} />
+             <Link
+                href="/"
+                className={cn(
+                    "text-muted-foreground transition-colors hover:text-foreground",
+                    pathname === "/" && "text-foreground"
+                )}
+            >
+                {t('home')}
+            </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none">
                     {t('consultes')} <ChevronDown className="h-4 w-4" />
@@ -61,7 +57,10 @@ export function Header() {
             </DropdownMenu>
             <Link 
               href="/configuracion/login?redirectTo=/configuracion/panel" 
-              className="text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={cn(
+                    "text-lg font-medium text-muted-foreground transition-colors hover:text-foreground",
+                    pathname.startsWith("/configuracion") && "text-foreground"
+                )}
             >
               {t('configuration')}
             </Link>
@@ -105,7 +104,16 @@ export function Header() {
                     <span className="sr-only">Menadiona</span>
                     </Link>
                     {navLinks.map((link) => (
-                      <NavLink key={link.href} {...link} />
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                            "text-muted-foreground transition-colors hover:text-foreground",
+                            pathname === link.href && "text-foreground"
+                        )}
+                        >
+                        {link.label}
+                        </Link>
                     ))}
                 </nav>
                 </SheetContent>
