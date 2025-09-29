@@ -93,7 +93,7 @@ export const useVisits = () => {
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
-            where('id', '==', visit.id.toLowerCase()),
+            where('id', '==', visit.id.toUpperCase()),
             where('exitTime', '==', null)
         );
         const activeVisitSnapshot = await getDocs(activeVisitQuery);
@@ -109,7 +109,7 @@ export const useVisits = () => {
         }
       
       const baseVisitData = {
-        id: visit.id.toLowerCase(),
+        id: visit.id.toUpperCase(),
         name: visit.name,
         company: visit.company,
         reason: visit.reason,
@@ -157,7 +157,7 @@ export const useVisits = () => {
   const registerExit = async (dni: string) => {
     const q = query(
       collection(db, VISITS_COLLECTION),
-      where('id', '==', dni.toLowerCase()),
+      where('id', '==', dni.toUpperCase()),
       where('exitTime', '==', null)
     );
     
