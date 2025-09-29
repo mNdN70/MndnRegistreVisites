@@ -35,7 +35,7 @@ const employeeSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   department: z.string().min(1, "Department is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").or(z.literal('')),
   receivesReports: z.boolean(),
 });
 
@@ -72,13 +72,13 @@ export default function ConfigPanel() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isNewEmployeeEmailValid = emailRegex.test(newEmployeeEmail);
+  const isNewEmployeeEmailValid = newEmployeeEmail === '' || emailRegex.test(newEmployeeEmail);
 
   useEffect(() => {
-    if (!isNewEmployeeEmailValid) {
+    if (newEmployeeEmail === '' || !isNewEmployeeEmailValid) {
         setNewEmployeeReceivesReports(false);
     }
-  }, [isNewEmployeeEmailValid])
+  }, [isNewEmployeeEmailValid, newEmployeeEmail])
 
   const {
     control,
@@ -99,13 +99,13 @@ export default function ConfigPanel() {
   });
   
   const watchedEmail = watch("email");
-  const isEditEmailValid = emailRegex.test(watchedEmail);
+  const isEditEmailValid = watchedEmail === '' || emailRegex.test(watchedEmail);
 
   useEffect(() => {
-    if(!isEditEmailValid) {
+    if(watchedEmail === '' || !isEditEmailValid) {
         setValue('receivesReports', false)
     }
-  }, [isEditEmailValid, setValue]);
+  }, [isEditEmailValid, setValue, watchedEmail]);
 
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export default function ConfigPanel() {
   };
 
   const handleAddEmployee = () => {
-    if (newEmployeeName.trim() && newEmployeeDept.trim() && newEmployeeEmail.trim()) {
+    if (newEmployeeName.trim() && newEmployeeDept.trim()) {
       addEmployee({
         name: newEmployeeName.trim(),
         department: newEmployeeDept.trim(),
@@ -227,10 +227,10 @@ export default function ConfigPanel() {
                     name="receivesReports"
                     control={control}
                     render={({ field }) => (
-                         <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} disabled={!isEditEmailValid} />
+                         <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} disabled={!isEditEmailValid || watchedEmail === ''} />
                     )}
                 />
-                <Label htmlFor="receivesReportsEdit" className={!isEditEmailValid ? "text-muted-foreground" : ""}>{t('receives_reports')}</Label>
+                <Label htmlFor="receivesReportsEdit" className={!isEditEmailValid || watchedEmail === '' ? "text-muted-foreground" : ""}>{t('receives_reports')}</Label>
             </div>
              <DialogFooter>
                 <DialogClose asChild>
@@ -298,11 +298,11 @@ export default function ConfigPanel() {
                         id="receivesReports" 
                         checked={newEmployeeReceivesReports} 
                         onCheckedChange={(checked) => setNewEmployeeReceivesReports(!!checked)} 
-                        disabled={!isNewEmployeeEmailValid}
+                        disabled={!isNewEmployeeEmailValid || newEmployeeEmail === ''}
                     />
                     <Label 
                         htmlFor="receivesReports" 
-                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isNewEmployeeEmailValid ? 'text-muted-foreground' : ''}`}
+                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isNewEmployeeEmailValid || newEmployeeEmail === '' ? 'text-muted-foreground' : ''}`}
                     >
                        {t('receives_reports')}
                     </Label>
