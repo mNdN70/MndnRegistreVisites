@@ -76,7 +76,6 @@ export default function RecordsTable() {
             <Calendar
               initialFocus
               mode="range"
-              defaultMonth={date?.from}
               selected={date}
               onSelect={setDate}
               numberOfMonths={2}
