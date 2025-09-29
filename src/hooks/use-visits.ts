@@ -214,7 +214,7 @@ export const useVisits = () => {
     });
   }, [visits, date]);
   
-  const createCSV = (data: AnyVisit[], filename: string) => {
+  const createCSV = (data: AnyVisit[], filename: string, recipients: string[] = []) => {
     if (data.length === 0) {
       toast({
         title: t('no_data_to_export'),
@@ -258,21 +258,22 @@ export const useVisits = () => {
     link.click();
     document.body.removeChild(link);
 
-    const to = 'destinatario1@example.com,destinatario2@example.com';
-    const subject = encodeURIComponent(`Exportación de Registros - ${filename}`);
-    const body = encodeURIComponent('Adjunte aquí el archivo CSV descargado.');
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
-
+    if (recipients.length > 0) {
+        const to = recipients.join(',');
+        const subject = encodeURIComponent(`Exportación de Registros - ${filename}`);
+        const body = encodeURIComponent('Adjunte aquí el archivo CSV descargado.');
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
+    }
 
     toast({ title: t('export_completed') });
   };
 
-  const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
-    createCSV(data, filename);
+  const exportToCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[]) => {
+    createCSV(data, filename, recipients);
   }, [t]);
 
-  const exportActiveVisitsToCSV = useCallback(() => {
-    createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
+  const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
+    createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
   }, [getActiveVisits, t]);
 
 

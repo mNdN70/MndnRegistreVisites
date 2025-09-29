@@ -182,7 +182,7 @@ export const useConfig = () => {
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
     try {
         const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
-        await updateDoc(employeeRef, employeeData as any);
+        await updateDoc(employeeRef, employeeData);
         setEmployees(prev => prev.map(e => e.id === employeeId ? { id: employeeId, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
         toast({ title: 'Empleado actualizado' });
     } catch (error) {
@@ -219,7 +219,13 @@ export const useConfig = () => {
       toast({ title: 'Error', description: t('error_deleting_user'), variant: 'destructive' });
     }
  }, [users.length, toast, t]);
+ 
+ const getReportRecipients = useCallback(() => {
+    return employees
+      .filter(e => e.receivesReports && e.email)
+      .map(e => e.email);
+  }, [employees]);
 
 
-  return { loading, departments, employees, users, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployee, addUser, removeUser, fetchConfig };
+  return { loading, departments, employees, users, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployee, addUser, removeUser, fetchConfig, getReportRecipients };
 };

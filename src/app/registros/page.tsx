@@ -8,11 +8,18 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useVisits } from "@/hooks/use-visits";
+import { useConfig } from "@/hooks/use-config";
 
 export default function RecordsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { exportToCSV, getFilteredVisits } = useVisits();
+  const { getReportRecipients } = useConfig();
+  
+  const handleExport = () => {
+    const recipients = getReportRecipients();
+    exportToCSV(getFilteredVisits(), 'registros.csv', recipients);
+  }
 
   return (
     <PageContainer>
@@ -26,7 +33,7 @@ export default function RecordsPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => exportToCSV(getFilteredVisits(), 'registros.csv')}>
+                <Button onClick={handleExport}>
                     <Download className="mr-2 h-4 w-4" />
                     {t('export_to_csv')}
                 </Button>
