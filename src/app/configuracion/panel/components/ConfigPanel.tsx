@@ -32,11 +32,15 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const employeeSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   department: z.string().min(1, "Department is required"),
   email: z.string().email("Invalid email address"),
   receivesReports: z.boolean(),
 });
+
+type EmployeeFormData = z.infer<typeof employeeSchema>;
+
 
 export default function ConfigPanel() {
   const router = useRouter();
@@ -73,7 +77,7 @@ export default function ConfigPanel() {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<Employee>({
+  } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
         name: '',
@@ -144,9 +148,10 @@ export default function ConfigPanel() {
     setIsEditDialogOpen(true);
   };
   
-  const onEmployeeUpdateSubmit = (data: Employee) => {
+  const onEmployeeUpdateSubmit = (data: EmployeeFormData) => {
     if (selectedEmployee?.id) {
-      updateEmployee(selectedEmployee.id, data);
+      const { id, ...updateData } = data;
+      updateEmployee(selectedEmployee.id, updateData);
     }
     setIsEditDialogOpen(false);
     setSelectedEmployee(null);

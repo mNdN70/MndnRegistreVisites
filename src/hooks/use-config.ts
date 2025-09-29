@@ -181,10 +181,12 @@ export const useConfig = () => {
   
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
     try {
-        await updateDoc(doc(db, EMPLOYEES_COLLECTION, employeeId), employeeData as any);
-        setEmployees(prev => prev.map(e => e.id === employeeId ? { ...e, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
+        const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
+        await updateDoc(employeeRef, employeeData);
+        setEmployees(prev => prev.map(e => e.id === employeeId ? { id: employeeId, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
         toast({ title: 'Empleado actualizado' });
     } catch (error) {
+        console.error("Error updating employee: ", error);
         toast({ title: 'Error', description: 'No se pudo actualizar el empleado.', variant: 'destructive' });
     }
   }, [toast, t]);
