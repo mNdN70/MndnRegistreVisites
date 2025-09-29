@@ -206,11 +206,15 @@ export const useVisits = () => {
   }, [visits]);
   
   const getFilteredVisits = useCallback(() => {
+    if (!date?.from) {
+      return visits;
+    }
+    const from = startOfDay(date.from);
+    const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
+
     return visits.filter((visit) => {
-      if (!date?.from) return true;
       const entryDate = new Date(visit.entryTime);
-      const toDate = date.to ?? date.from;
-      return isWithinInterval(entryDate, { start: startOfDay(date.from), end: endOfDay(toDate) });
+      return isWithinInterval(entryDate, { start: from, end: to });
     });
   }, [visits, date]);
   
@@ -270,7 +274,7 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[]) => {
     createCSV(data, filename, recipients);
-  }, [t]);
+  }, [t, createCSV]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
