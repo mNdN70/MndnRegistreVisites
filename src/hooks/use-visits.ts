@@ -225,7 +225,7 @@ export const useVisits = () => {
     }
 
     const headers = [
-      'ID', 'Nombre', 'Empresa', 'Motivo Visita', 'Persona a Visitar', 'Departamento', 'Hora Entrada', 'Hora Salida', 'Tipo', 'Estado', 'Empresa Tpts', 'Matrícula', 'Matrícula Remolque'
+        'DNI', 'NOMBRE Y APELLIDOS', 'EMPRESA', 'PERSONA A VISITAR', 'MATRICULA', 'REMOLQUE', 'EMPRESA DE TRANSPORTE', 'HORA ENTRADA', 'HORA SALIDA', 'ESTADO'
     ];
     
     const rows = data.map(v => {
@@ -235,25 +235,23 @@ export const useVisits = () => {
       } else if (v.exitTime) {
         status = t('finished');
       }
+      
+      const isTransporter = v.type === 'transporter';
 
-      const baseRow = [
+      const rowData = [
         v.id,
         v.name,
         v.company,
-        v.reason || '',
         v.personToVisit,
-        v.department,
+        isTransporter ? (v as TransporterVisit).licensePlate : '',
+        isTransporter ? (v as TransporterVisit).trailerLicensePlate || '' : '',
+        isTransporter ? (v as TransporterVisit).haulierCompany : '',
         new Date(v.entryTime).toLocaleString(),
         v.exitTime ? new Date(v.exitTime).toLocaleString() : '',
-        v.type,
         status
       ];
 
-      if (v.type === 'transporter') {
-        return [...baseRow, v.haulierCompany, v.licensePlate, v.trailerLicensePlate || ''].map(d => `"${String(d).replace(/"/g, '""')}"`).join(',');
-      } else {
-        return [...baseRow, '', '', ''].map(d => `"${String(d).replace(/"/g, '""')}"`).join(',');
-      }
+      return rowData.map(d => `"${String(d).replace(/"/g, '""')}"`).join(',');
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
@@ -279,12 +277,12 @@ export const useVisits = () => {
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[]) => {
     createCSV(data, filename, recipients);
-  }, [t, createCSV]);
+  }, [t]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     const activeVisits = getActiveVisits();
     createCSV(activeVisits, 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, t, createCSV]);
+  }, [getActiveVisits, t]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
