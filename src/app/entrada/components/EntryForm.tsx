@@ -81,7 +81,7 @@ export default function EntryForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = await addVisit({ ...values, type: 'general' });
+    const result = await addVisit({ ...values, id: values.id.toUpperCase(), type: 'general' });
     if (result.success) {
       form.reset();
       setTimeout(() => router.push("/"), 2000);

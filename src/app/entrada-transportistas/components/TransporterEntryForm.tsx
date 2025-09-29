@@ -86,7 +86,13 @@ export default function TransporterEntryForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = await addVisit({ ...values, type: 'transporter' });
+    const result = await addVisit({ 
+        ...values, 
+        id: values.id.toUpperCase(),
+        licensePlate: values.licensePlate.toUpperCase(),
+        trailerLicensePlate: values.trailerLicensePlate?.toUpperCase(),
+        type: 'transporter' 
+    });
     if (result.success) {
       form.reset();
       setTimeout(() => router.push("/"), 2000);
