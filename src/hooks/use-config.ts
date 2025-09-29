@@ -26,6 +26,8 @@ export interface Employee {
   id?: string;
   name: string;
   department: string;
+  email: string;
+  receivesReports: boolean;
 }
 
 export interface User {

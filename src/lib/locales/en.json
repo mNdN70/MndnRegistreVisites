@@ -85,6 +85,8 @@
     "add": "Add",
     "employees": "Employees",
     "employee_name": "Employee name",
+    "employee_email": "Employee's Email",
+    "receives_reports": "Receives reports",
     "logout": "Exit",
     "users": "Users",
     "users_description": "Manage users with access to the configuration panel.",
