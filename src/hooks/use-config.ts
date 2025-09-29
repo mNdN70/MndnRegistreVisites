@@ -79,7 +79,7 @@ export const useConfig = () => {
       await seedInitialData();
 
       const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
-      const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
+      const employeesQuery = query(collection(db, EMPLOYEES_COLlection), orderBy('name'));
       const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
 
       const [departmentsSnapshot, employeesSnapshot, usersSnapshot] = await Promise.all([
@@ -182,14 +182,14 @@ export const useConfig = () => {
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
     try {
         const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
-        await updateDoc(employeeRef, employeeData);
+        await updateDoc(employeeRef, employeeData as any);
         setEmployees(prev => prev.map(e => e.id === employeeId ? { id: employeeId, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
         toast({ title: 'Empleado actualizado' });
     } catch (error) {
         console.error("Error updating employee: ", error);
         toast({ title: 'Error', description: 'No se pudo actualizar el empleado.', variant: 'destructive' });
     }
-  }, [toast, t]);
+  }, [toast]);
 
 
   const addUser = useCallback(async (user: User) => {

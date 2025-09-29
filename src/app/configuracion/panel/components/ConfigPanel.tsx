@@ -150,7 +150,12 @@ export default function ConfigPanel() {
   
   const onEmployeeUpdateSubmit = (data: EmployeeFormData) => {
     if (selectedEmployee?.id) {
-      const { id, ...updateData } = data;
+        const updateData = {
+            name: data.name,
+            email: data.email,
+            department: data.department,
+            receivesReports: data.receivesReports,
+        };
       updateEmployee(selectedEmployee.id, updateData);
     }
     setIsEditDialogOpen(false);
