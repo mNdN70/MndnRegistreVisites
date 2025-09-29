@@ -83,7 +83,7 @@ export const useVisits = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchVisits();
@@ -258,16 +258,21 @@ export const useVisits = () => {
     link.click();
     document.body.removeChild(link);
 
+    const subject = encodeURIComponent(`Exportación de Registros - ${filename}`);
+    const body = encodeURIComponent('Adjunte aquí el archivo CSV descargado.');
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+
+
     toast({ title: t('export_completed') });
   };
 
   const exportToCSV = useCallback((data: AnyVisit[], filename: string) => {
     createCSV(data, filename);
-  }, [createCSV, t]);
+  }, [t]);
 
   const exportActiveVisitsToCSV = useCallback(() => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv');
-  }, [getActiveVisits, createCSV]);
+  }, [getActiveVisits, t]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
