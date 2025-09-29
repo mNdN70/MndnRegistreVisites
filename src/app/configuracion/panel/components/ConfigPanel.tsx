@@ -70,12 +70,23 @@ export default function ConfigPanel() {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isNewEmployeeEmailValid = emailRegex.test(newEmployeeEmail);
+
+  useEffect(() => {
+    if (!isNewEmployeeEmailValid) {
+        setNewEmployeeReceivesReports(false);
+    }
+  }, [isNewEmployeeEmailValid])
 
   const {
     control,
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
@@ -86,6 +97,16 @@ export default function ConfigPanel() {
         receivesReports: false,
     }
   });
+  
+  const watchedEmail = watch("email");
+  const isEditEmailValid = emailRegex.test(watchedEmail);
+
+  useEffect(() => {
+    if(!isEditEmailValid) {
+        setValue('receivesReports', false)
+    }
+  }, [isEditEmailValid, setValue]);
+
 
   useEffect(() => {
     if (selectedEmployee) {
@@ -206,10 +227,10 @@ export default function ConfigPanel() {
                     name="receivesReports"
                     control={control}
                     render={({ field }) => (
-                         <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} />
+                         <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} disabled={!isEditEmailValid} />
                     )}
                 />
-                <Label htmlFor="receivesReportsEdit">{t('receives_reports')}</Label>
+                <Label htmlFor="receivesReportsEdit" className={!isEditEmailValid ? "text-muted-foreground" : ""}>{t('receives_reports')}</Label>
             </div>
              <DialogFooter>
                 <DialogClose asChild>
@@ -273,8 +294,16 @@ export default function ConfigPanel() {
                     </SelectContent>
                 </Select>
                  <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="receivesReports" checked={newEmployeeReceivesReports} onCheckedChange={(checked) => setNewEmployeeReceivesReports(!!checked)} />
-                    <Label htmlFor="receivesReports" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <Checkbox 
+                        id="receivesReports" 
+                        checked={newEmployeeReceivesReports} 
+                        onCheckedChange={(checked) => setNewEmployeeReceivesReports(!!checked)} 
+                        disabled={!isNewEmployeeEmailValid}
+                    />
+                    <Label 
+                        htmlFor="receivesReports" 
+                        className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isNewEmployeeEmailValid ? 'text-muted-foreground' : ''}`}
+                    >
                        {t('receives_reports')}
                     </Label>
                 </div>
