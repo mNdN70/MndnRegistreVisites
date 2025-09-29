@@ -258,9 +258,10 @@ export const useVisits = () => {
     link.click();
     document.body.removeChild(link);
 
+    const to = 'destinatario1@example.com,destinatario2@example.com';
     const subject = encodeURIComponent(`Exportación de Registros - ${filename}`);
     const body = encodeURIComponent('Adjunte aquí el archivo CSV descargado.');
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
 
 
     toast({ title: t('export_completed') });
