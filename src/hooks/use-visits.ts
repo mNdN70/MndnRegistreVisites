@@ -83,7 +83,7 @@ export const useVisits = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, t]);
+  }, [toast]);
 
   useEffect(() => {
     fetchVisits();
@@ -274,7 +274,7 @@ export const useVisits = () => {
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, t]);
+  }, [getActiveVisits, t, createCSV]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };

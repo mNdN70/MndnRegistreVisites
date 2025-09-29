@@ -46,46 +46,44 @@ export default function RecordsTable() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-start items-center mb-4 gap-4">
-        <div className="grid gap-2">
-           <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="date"
-                variant={"outline"}
-                className={cn(
-                  "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "LLL dd, y", { locale: locales[language] })} -{" "}
-                      {format(date.to, "LLL dd, y", { locale: locales[language] })}
-                    </>
-                  ) : (
-                    format(date.from, "LLL dd, y", { locale: locales[language] })
-                  )
+      <div className="flex justify-start items-center mb-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="date"
+              variant={"outline"}
+              className={cn(
+                "w-[300px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "LLL dd, y", { locale: locales[language] })} -{" "}
+                    {format(date.to, "LLL dd, y", { locale: locales[language] })}
+                  </>
                 ) : (
-                  <span>{t('select_range')}</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-                locale={locales[language]}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+                  format(date.from, "LLL dd, y", { locale: locales[language] })
+                )
+              ) : (
+                <span>{t('select_range')}</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={2}
+              locale={locales[language]}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
       {filteredVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
