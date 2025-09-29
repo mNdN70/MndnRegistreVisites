@@ -18,7 +18,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
-import { isWithinInterval } from 'date-fns';
+import { isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -27,7 +27,10 @@ export const useVisits = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date())
+  });
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
@@ -125,8 +128,8 @@ export const useVisits = () => {
         newVisit = {
           ...baseVisitData,
           haulierCompany: transporterVisit.haulierCompany,
-          licensePlate: transporterVisit.licensePlate,
-          trailerLicensePlate: transporterVisit.trailerLicensePlate,
+          licensePlate: transporterVisit.licensePlate.toUpperCase(),
+          trailerLicensePlate: transporterVisit.trailerLicensePlate?.toUpperCase(),
           type: 'transporter',
         };
       } else {
@@ -206,8 +209,8 @@ export const useVisits = () => {
     if (!date?.from) {
       return visits;
     }
-    const from = date.from;
-    const to = date.to ?? date.from;
+    const from = startOfDay(date.from);
+    const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
 
     return visits.filter((visit) => {
       const entryDate = new Date(visit.entryTime);
@@ -282,7 +285,7 @@ export const useVisits = () => {
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     const activeVisits = getActiveVisits();
     createCSV(activeVisits, 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, t]);
+  }, [getActiveVisits, t, createCSV]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
