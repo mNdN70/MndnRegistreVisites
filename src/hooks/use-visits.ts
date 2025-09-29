@@ -27,10 +27,7 @@ export const useVisits = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: startOfDay(new Date()),
-    to: endOfDay(new Date()),
-  });
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
@@ -277,7 +274,8 @@ export const useVisits = () => {
   }, [t, createCSV]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
-    createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
+    const activeVisits = getActiveVisits();
+    createCSV(activeVisits, 'registros_visitas_activas.csv', recipients);
   }, [getActiveVisits, t, createCSV]);
 
 
