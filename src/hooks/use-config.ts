@@ -79,7 +79,7 @@ export const useConfig = () => {
       await seedInitialData();
 
       const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
-      const employeesQuery = query(collection(db, EMPLOYEES_COLlection), orderBy('name'));
+      const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
       const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
 
       const [departmentsSnapshot, employeesSnapshot, usersSnapshot] = await Promise.all([
