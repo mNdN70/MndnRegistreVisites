@@ -18,7 +18,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
-import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { isWithinInterval } from 'date-fns';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -206,8 +206,8 @@ export const useVisits = () => {
     if (!date?.from) {
       return visits;
     }
-    const from = startOfDay(date.from);
-    const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
+    const from = date.from;
+    const to = date.to ?? date.from;
 
     return visits.filter((visit) => {
       const entryDate = new Date(visit.entryTime);
@@ -225,10 +225,17 @@ export const useVisits = () => {
     }
 
     const headers = [
-      'ID', 'Nombre', 'Empresa', 'Motivo Visita', 'Persona a Visitar', 'Departamento', 'Hora Entrada', 'Hora Salida', 'Tipo', 'Empresa Tpts', 'Matrícula', 'Matrícula Remolque'
+      'ID', 'Nombre', 'Empresa', 'Motivo Visita', 'Persona a Visitar', 'Departamento', 'Hora Entrada', 'Hora Salida', 'Tipo', 'Estado', 'Empresa Tpts', 'Matrícula', 'Matrícula Remolque'
     ];
     
     const rows = data.map(v => {
+      let status = t('active');
+      if (v.autoExit) {
+        status = t('auto_exit');
+      } else if (v.exitTime) {
+        status = t('finished');
+      }
+
       const baseRow = [
         v.id,
         v.name,
@@ -237,8 +244,9 @@ export const useVisits = () => {
         v.personToVisit,
         v.department,
         new Date(v.entryTime).toLocaleString(),
-        v.exitTime ? new Date(v.exitTime).toLocaleString() : 'ACTIVO',
-        v.type
+        v.exitTime ? new Date(v.exitTime).toLocaleString() : '',
+        v.type,
+        status
       ];
 
       if (v.type === 'transporter') {
