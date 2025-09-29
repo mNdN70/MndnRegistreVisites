@@ -1,10 +1,10 @@
 "use client";
 
-import { useConfig } from "@/hooks/use-config";
+import { useConfig, Employee } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, UserPlus, KeyRound, LogOut, Mail } from "lucide-react";
+import { Trash2, UserPlus, KeyRound, LogOut, Mail, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,25 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/use-translation";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const employeeSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  department: z.string().min(1, "Department is required"),
+  email: z.string().email("Invalid email address"),
+  receivesReports: z.boolean(),
+});
 
 export default function ConfigPanel() {
   const router = useRouter();
@@ -29,6 +48,7 @@ export default function ConfigPanel() {
     removeDepartment,
     addEmployee,
     removeEmployee,
+    updateEmployee,
     addUser,
     removeUser,
     loading,
@@ -43,6 +63,32 @@ export default function ConfigPanel() {
   const [newEmployeeReceivesReports, setNewEmployeeReceivesReports] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<Employee>({
+    resolver: zodResolver(employeeSchema),
+    defaultValues: {
+        name: '',
+        department: '',
+        email: '',
+        receivesReports: false,
+    }
+  });
+
+  useEffect(() => {
+    if (selectedEmployee) {
+      reset(selectedEmployee);
+    }
+  }, [selectedEmployee, reset]);
+
 
   if (loading) {
     return (
@@ -92,9 +138,78 @@ export default function ConfigPanel() {
     }
     router.push('/');
   };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsEditDialogOpen(true);
+  };
+  
+  const onEmployeeUpdateSubmit = (data: Employee) => {
+    if (selectedEmployee?.id) {
+      updateEmployee(selectedEmployee.id, data);
+    }
+    setIsEditDialogOpen(false);
+    setSelectedEmployee(null);
+  };
+
   
   return (
     <div className="space-y-8">
+       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Empleado</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onEmployeeUpdateSubmit)} className="space-y-4">
+             <div>
+                <Label htmlFor="name">Nombre</Label>
+                <Input id="name" {...register("name")} />
+                {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
+            </div>
+             <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" {...register("email")} type="email" />
+                {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="department">Departamento</Label>
+              <Controller
+                name="department"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('department')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.department && <p className="text-red-500 text-xs">{errors.department.message}</p>}
+            </div>
+
+            <div className="flex items-center space-x-2">
+                 <Controller
+                    name="receivesReports"
+                    control={control}
+                    render={({ field }) => (
+                         <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} />
+                    )}
+                />
+                <Label htmlFor="receivesReportsEdit">{t('receives_reports')}</Label>
+            </div>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">{t('cancel')}</Button>
+                </DialogClose>
+                <Button type="submit">Guardar Cambios</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <div className="grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
@@ -165,8 +280,11 @@ export default function ConfigPanel() {
                     <span className="text-xs text-muted-foreground">{emp.department}</span>
                      <span className="text-xs text-muted-foreground">{emp.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     {emp.receivesReports && <Mail className="h-4 w-4 text-primary" title={t('receives_reports')} />}
+                    <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(emp)}>
+                      <Pencil className="h-4 w-4 text-primary" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => removeEmployee(emp.name)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

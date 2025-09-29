@@ -15,6 +15,7 @@ import {
   orderBy,
   setDoc,
   addDoc,
+  updateDoc,
   getCountFromServer
 } from 'firebase/firestore';
 
@@ -177,6 +178,17 @@ export const useConfig = () => {
        toast({ title: 'Error', description: t('error_deleting_employee'), variant: 'destructive' });
     }
   }, [employees, toast, t]);
+  
+  const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
+    try {
+        await updateDoc(doc(db, EMPLOYEES_COLLECTION, employeeId), employeeData as any);
+        setEmployees(prev => prev.map(e => e.id === employeeId ? { ...e, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
+        toast({ title: 'Empleado actualizado' });
+    } catch (error) {
+        toast({ title: 'Error', description: 'No se pudo actualizar el empleado.', variant: 'destructive' });
+    }
+  }, [toast, t]);
+
 
   const addUser = useCallback(async (user: User) => {
     if (users.find(u => u.username.toLowerCase() === user.username.toLowerCase())) {
@@ -207,5 +219,5 @@ export const useConfig = () => {
  }, [users.length, toast, t]);
 
 
-  return { loading, departments, employees, users, addDepartment, removeDepartment, addEmployee, removeEmployee, addUser, removeUser, fetchConfig };
+  return { loading, departments, employees, users, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployee, addUser, removeUser, fetchConfig };
 };
