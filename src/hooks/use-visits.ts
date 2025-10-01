@@ -214,10 +214,6 @@ export const useVisits = () => {
       return isWithinInterval(entryDate, { start: from, end: to });
     }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
-
-  const getCurrentlyFilteredVisits = useCallback(() => {
-    return getFilteredVisits();
-  }, [getFilteredVisits]);
   
   const createCSV = (data: AnyVisit[], filename: string, recipients: string[] = []) => {
     if (data.length === 0) {
@@ -279,10 +275,10 @@ export const useVisits = () => {
     toast({ title: t('export_completed') });
   };
 
-  const exportToCSV = useCallback((dataCallback: () => AnyVisit[], filename: string, recipients: string[]) => {
-    const data = dataCallback();
+  const exportToCSV = useCallback((filename: string, recipients: string[]) => {
+    const data = getFilteredVisits();
     createCSV(data, filename, recipients);
-  }, [t]);
+  }, [getFilteredVisits, t]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
