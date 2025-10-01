@@ -20,8 +20,8 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: t('home') },
-    { href: "/consultas", label: t('consultes') },
-    { href: "/configuracion/panel", label: t('configuration') },
+    { href: "/consultas", label: 'Consultes' },
+    { href: "/configuracion/panel", label: 'Configuració' },
   ];
 
   const getHref = (href: string) => {
