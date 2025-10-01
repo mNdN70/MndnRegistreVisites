@@ -289,5 +289,5 @@ export const useVisits = () => {
   }, [getActiveVisits, t]);
 
 
-  return { loading, addVisit, registerExit, getActiveVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits, getCurrentlyFilteredVisits };
+  return { loading, addVisit, registerExit, getActiveVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
 };
