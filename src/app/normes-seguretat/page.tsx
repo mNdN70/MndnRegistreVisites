@@ -23,7 +23,7 @@ function SafetyNormsContent() {
   };
 
   return (
-    <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
+    <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)] bg-white">
       <Card className="w-full max-w-4xl shadow-xl">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
