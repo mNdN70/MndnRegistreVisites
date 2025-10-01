@@ -17,13 +17,12 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
-const getFormSchema = (t: (key: string) => string) => z.object({
-  username: z.string().min(1, t('username_required')),
-  password: z.string().min(1, t('password_required')),
+const formSchema = z.object({
+  username: z.string().min(1, 'L\'usuari és obligatori.'),
+  password: z.string().min(1, 'La contrasenya és obligatòria.'),
 });
 
 export default function LoginForm() {
@@ -31,8 +30,6 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t } = useTranslation();
-  const formSchema = getFormSchema(t);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,7 +51,7 @@ export default function LoginForm() {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        toast({ title: t('access_granted') });
+        toast({ title: 'Accés concedit' });
         
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('auth_token', 'true');
@@ -64,15 +61,15 @@ export default function LoginForm() {
         router.push(redirectTo);
       } else {
         toast({
-          title: t('access_denied'),
-          description: t('wrong_user_or_pass'),
+          title: 'Error d\'accés',
+          description: 'Usuari o contrasenya incorrectes.',
           variant: "destructive",
         });
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast({ title: "Error", description: t('login_error'), variant: "destructive" });
+      toast({ title: "Error", description: 'No s\'ha pogut iniciar sessió.', variant: "destructive" });
       setIsSubmitting(false);
     }
   }
@@ -85,9 +82,9 @@ export default function LoginForm() {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('username')}</FormLabel>
+              <FormLabel>Usuari</FormLabel>
               <FormControl>
-                <Input placeholder={t('username_placeholder')} {...field} />
+                <Input placeholder='El vostre usuari' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -98,9 +95,9 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('password')}</FormLabel>
+              <FormLabel>Contrasenya</FormLabel>
               <FormControl>
-                <Input type="password" placeholder={t('password_placeholder')} {...field} />
+                <Input type="password" placeholder='La vostra contrasenya' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,11 +105,11 @@ export default function LoginForm() {
         />
         <div className="flex justify-between gap-4">
           <Button type="button" variant="outline" onClick={() => router.push('/')}>
-            {t('cancel')}
+            Cancel·lar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('login')}
+            Accedir
           </Button>
         </div>
       </form>
