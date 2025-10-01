@@ -31,23 +31,31 @@ export default function Home() {
   const actionCards = [
     {
       href: "/entrada",
-      title: t("entry"),
-      description: t("general_entry_description"),
+      titleKey: "entry",
+      descriptionKey: "general_entry_description",
       icon: <User className="h-12 w-12" />,
     },
     {
       href: "/entrada-transportistas",
-      title: t("transporter_entry"),
-      description: t("transporter_entry_description"),
+      titleKey: "transporter_entry",
+      descriptionKey: "transporter_entry_description",
       icon: <Truck className="h-12 w-12" />,
     },
     {
       href: "/salida",
-      title: t("exit"),
-      description: t("exit_description"),
+      titleKey: "exit",
+      descriptionKey: "exit_description",
       icon: <LogOut className="h-12 w-12" />,
     },
   ];
+
+  const translatedActionCards = actionCards
+    .map(card => ({
+        ...card,
+        title: t(card.titleKey),
+        description: t(card.descriptionKey),
+    }))
+    .filter(card => card.title);
 
   return (
     <PageContainer>
@@ -61,8 +69,8 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {actionCards.map((card) => (
-          <Link href={card.href} key={card.title}>
+        {translatedActionCards.map((card) => (
+          <Link href={card.href} key={card.href}>
             <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl">
               <CardHeader className="flex flex-col items-center justify-center text-center p-8">
                 <div className="mb-4 text-primary group-hover:text-accent transition-colors duration-300">
