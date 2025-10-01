@@ -30,13 +30,13 @@ export default function Home() {
 
   const actionCards = [
     {
-      href: "/entrada",
+      href: "/normes-seguretat?type=general",
       titleKey: "entry",
       descriptionKey: "general_entry_description",
       icon: <User className="h-12 w-12" />,
     },
     {
-      href: "/entrada-transportistas",
+      href: "/normes-seguretat?type=transporter",
       titleKey: "transporter_entry",
       descriptionKey: "transporter_entry_description",
       icon: <Truck className="h-12 w-12" />,
