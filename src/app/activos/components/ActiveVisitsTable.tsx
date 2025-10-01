@@ -36,18 +36,18 @@ export default function ActiveVisitsTable() {
     <div>
       {activeVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">{t('no_active_visits')}</p>
+          <p className="text-lg">No hi ha visites actives en aquest moment.</p>
         </div>
       ) : (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('name')}</TableHead>
-                <TableHead>{t('dni_nie')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('company')}</TableHead>
-                <TableHead>{t('entry_time')}</TableHead>
-                <TableHead className="hidden sm:table-cell">{t('visiting')}</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>DNI/NIE</TableHead>
+                <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                <TableHead>Hora d'Entrada</TableHead>
+                <TableHead className="hidden sm:table-cell">Visita a</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -59,7 +59,7 @@ export default function ActiveVisitsTable() {
                   <TableCell>
                     <div>{format(new Date(visit.entryTime), "p", { locale: locales[language] })}</div>
                     <div className="text-xs text-muted-foreground">
-                      ({t('ago')} {formatDistanceToNow(new Date(visit.entryTime), { locale: locales[language] })})
+                      (fa {formatDistanceToNow(new Date(visit.entryTime), { locale: locales[language] })})
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{visit.personToVisit}</TableCell>
