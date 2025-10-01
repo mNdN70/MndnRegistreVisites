@@ -27,7 +27,7 @@ function SafetyNormsContent() {
       <Card className="w-full max-w-4xl shadow-xl">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-               <Image src="/logo.png" alt="Menadiona Logo" width={200} height={50} />
+               <Image src="/logo.png" alt="Menadiona Logo" width={100} height={50} />
             </div>
           <CardTitle className="font-headline text-2xl md:text-3xl">NORMES BÀSIQUES DE SEGURETAT EN LES INSTAL.LACIONS: PERSONAL EXTERN</CardTitle>
         </CardHeader>
