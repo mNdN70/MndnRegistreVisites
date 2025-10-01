@@ -13,12 +13,12 @@ import { useConfig } from "@/hooks/use-config";
 export default function RecordsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { exportToCSV, getFilteredVisits } = useVisits();
+  const { exportToCSV, getCurrentlyFilteredVisits } = useVisits();
   const { getReportRecipients } = useConfig();
   
   const handleExport = () => {
     const recipients = getReportRecipients();
-    exportToCSV(getFilteredVisits(), 'registros.csv', recipients);
+    exportToCSV(getCurrentlyFilteredVisits, 'registros.csv', recipients);
   }
 
   return (

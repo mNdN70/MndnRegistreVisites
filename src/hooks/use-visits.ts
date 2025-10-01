@@ -200,21 +200,13 @@ export const useVisits = () => {
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits]);
-
-  const getAllVisits = useCallback(() => {
-    return [...visits].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
-  }, [visits]);
   
   const getFilteredVisits = useCallback(() => {
     if (!date?.from) {
-      // If no date is selected, maybe return all visits or none, depending on desired default behavior.
-      // Returning all visits seems reasonable if no filter is applied.
       return visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
     }
   
     const from = startOfDay(date.from);
-    // If only `from` is selected, `to` can be the end of that same day.
-    // If `to` is also selected, use the end of that day.
     const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
   
     return visits.filter((visit) => {
@@ -222,6 +214,10 @@ export const useVisits = () => {
       return isWithinInterval(entryDate, { start: from, end: to });
     }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
+
+  const getCurrentlyFilteredVisits = useCallback(() => {
+    return getFilteredVisits();
+  }, [getFilteredVisits]);
   
   const createCSV = (data: AnyVisit[], filename: string, recipients: string[] = []) => {
     if (data.length === 0) {
@@ -283,15 +279,15 @@ export const useVisits = () => {
     toast({ title: t('export_completed') });
   };
 
-  const exportToCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[]) => {
+  const exportToCSV = useCallback((dataCallback: () => AnyVisit[], filename: string, recipients: string[]) => {
+    const data = dataCallback();
     createCSV(data, filename, recipients);
   }, [t]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
-    const activeVisits = getActiveVisits();
-    createCSV(activeVisits, 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, t, createCSV]);
+    createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
+  }, [getActiveVisits, t]);
 
 
-  return { loading, addVisit, registerExit, getActiveVisits, getAllVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
+  return { loading, addVisit, registerExit, getActiveVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits, getCurrentlyFilteredVisits };
 };
