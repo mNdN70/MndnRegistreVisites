@@ -45,7 +45,7 @@ function SafetyNormsContent() {
             </div>
             <li>En compliment de l'article 12 del RGPD i l'article 22 de la LOPDGDD, s'Informa que MENADIONA té instal·lat un sistema de videovigilància.</li>
              <div className="flex justify-center my-4">
-                <Image src="/camaras.png" alt="Cámaras de seguridad" width={200} height={113} />
+                <Image src="/camaras.png" alt="Cámaras de seguridad" width={100} height={55} />
             </div>
           </ul>
         </CardContent>
