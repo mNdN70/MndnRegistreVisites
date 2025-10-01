@@ -63,9 +63,6 @@ export default function Home() {
         <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
           {t('welcome_to_menadiona')}
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-          {t('main_description')}
-        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
