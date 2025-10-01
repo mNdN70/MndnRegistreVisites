@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "security-camera",
+      "description": "Security camera image for safety norms page",
+      "imageUrl": "https://images.unsplash.com/photo-1528312635006-8ea0bc49ec63?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzZWN1cml0eSUyMGNhbWVyYXxlbnwwfHx8fDE3NTkyMDgyNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "security camera"
+    }
+  ]
 }

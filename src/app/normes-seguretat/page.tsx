@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { PageContainer } from '@/components/PageContainer';
 import Image from 'next/image';
 import './styles.css';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function SafetyNormsContent() {
   const router = useRouter();
@@ -21,6 +22,8 @@ function SafetyNormsContent() {
       router.push(path);
     }
   };
+
+  const securityCameraImage = PlaceHolderImages.find(img => img.id === 'security-camera');
 
   return (
     <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
@@ -40,6 +43,18 @@ function SafetyNormsContent() {
             <li>No manipular cap equip, instal·lació, dispositiu electrònic, dispositiu de seguretat, màquina, eina o material del centre si no està autoritzat per a això.</li>
             <li>Queda terminantment prohibit realitzar qualsevol tipus de foc en les instal·lacions de l'empresa.</li>
             <li>En cas d'emergència s'ha d'acudir al punt de trobada situada en l'entrada de fàbrica, al costat del pàrquing reservat i seguir les instruccions del Cap d'Emergència.</li>
+            {securityCameraImage && (
+              <li className="list-none my-4">
+                <Image
+                  src={securityCameraImage.imageUrl}
+                  alt={securityCameraImage.description}
+                  width={800}
+                  height={200}
+                  data-ai-hint={securityCameraImage.imageHint}
+                  className="rounded-md"
+                />
+              </li>
+            )}
             <li>En compliment de l'article 12 del RGPD i l'article 22 de la LOPDGDD, s'Informa que MENADIONA té instal·lat un sistema de videovigilància.</li>
           </ul>
         </CardContent>
