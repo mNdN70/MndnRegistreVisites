@@ -20,13 +20,16 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: t('home') },
-    { href: "/registros", label: t('consult_records') },
+    { href: "/consultas", label: t('consultes') },
     { href: "/configuracion/panel", label: t('configuration') },
   ];
 
   const getHref = (href: string) => {
     if (href === "/") {
         return "/";
+    }
+    if (href === "/consultas") {
+        return "/consultas";
     }
     return `/configuracion/login?redirectTo=${href}`;
   }
@@ -40,16 +43,18 @@ export function Header() {
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={getHref(link.href)}
-                className={cn(
-                  "text-muted-foreground transition-colors hover:text-foreground",
-                  (pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))) && "text-foreground"
-                )}
-              >
-                {link.label}
-              </Link>
+                link.label && (
+                    <Link
+                        key={link.href}
+                        href={getHref(link.href)}
+                        className={cn(
+                        "text-muted-foreground transition-colors hover:text-foreground",
+                        (pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))) && "text-foreground"
+                        )}
+                    >
+                        {link.label}
+                    </Link>
+                )
             ))}
           </nav>
         </div>
@@ -91,16 +96,18 @@ export function Header() {
                     <span className="sr-only">Menadiona</span>
                     </Link>
                     {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={getHref(link.href)}
-                        className={cn(
-                            "text-muted-foreground transition-colors hover:text-foreground",
-                            pathname === link.href && "text-foreground"
-                        )}
-                        >
-                        {link.label}
+                      link.label && (
+                        <Link
+                            key={link.href}
+                            href={getHref(link.href)}
+                            className={cn(
+                                "text-muted-foreground transition-colors hover:text-foreground",
+                                pathname === link.href && "text-foreground"
+                            )}
+                            >
+                            {link.label}
                         </Link>
+                      )
                     ))}
                 </nav>
                 </SheetContent>

@@ -43,8 +43,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = useCallback((key: string): string => {
     if (!isClient) {
-        // Return default language translation on server
-        return translations['ca'][key as keyof typeof translations['ca']] || key;
+        return '';
     }
     return translations[language][key as keyof typeof translations[Language]] || key;
   }, [language, isClient]);
