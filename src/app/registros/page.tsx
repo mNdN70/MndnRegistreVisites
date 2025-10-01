@@ -22,7 +22,7 @@ export default function RecordsPage() {
 
   return (
     <PageContainer>
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>

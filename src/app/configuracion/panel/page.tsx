@@ -28,7 +28,7 @@ export default function ConfigPage() {
   
   return (
     <PageContainer>
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
           <CardTitle className="font-headline text-4xl">Panell de Configuració</CardTitle>
           <CardDescription>

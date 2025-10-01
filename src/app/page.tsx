@@ -68,7 +68,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {translatedActionCards.map((card) => (
           <Link href={card.href} key={card.href}>
-            <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl">
+            <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl bg-white">
               <CardHeader className="flex flex-col items-center justify-center text-center p-8">
                 <div className="mb-4 text-primary group-hover:text-accent transition-colors duration-300">
                   {card.icon}
