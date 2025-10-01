@@ -9,7 +9,7 @@ export default function GeneralEntryPage() {
   const { t } = useTranslation();
   return (
     <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-      <Card className="w-full max-w-2xl shadow-xl">
+      <Card className="w-full max-w-2xl shadow-xl bg-white">
         <CardHeader>
           <CardTitle className="font-headline text-4xl text-center">{t('general_entry_title')}</CardTitle>
           <CardDescription className="text-center">
