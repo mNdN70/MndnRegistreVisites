@@ -83,7 +83,7 @@ export const useVisits = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchVisits();
@@ -207,15 +207,20 @@ export const useVisits = () => {
   
   const getFilteredVisits = useCallback(() => {
     if (!date?.from) {
-      return visits;
+      // If no date is selected, maybe return all visits or none, depending on desired default behavior.
+      // Returning all visits seems reasonable if no filter is applied.
+      return visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
     }
+  
     const from = startOfDay(date.from);
+    // If only `from` is selected, `to` can be the end of that same day.
+    // If `to` is also selected, use the end of that day.
     const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
-
+  
     return visits.filter((visit) => {
       const entryDate = new Date(visit.entryTime);
       return isWithinInterval(entryDate, { start: from, end: to });
-    });
+    }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
   
   const createCSV = (data: AnyVisit[], filename: string, recipients: string[] = []) => {
@@ -228,7 +233,7 @@ export const useVisits = () => {
     }
 
     const headers = [
-        'DNI', 'NOMBRE Y APELLIDOS', 'EMPRESA', 'PERSONA A VISITAR', 'MATRICULA', 'REMOLQUE', 'EMPRESA DE TRANSPORTE', 'HORA ENTRADA', 'HORA SALIDA', 'ESTADO'
+      'DNI', 'NOMBRE Y APELLIDOS', 'EMPRESA', 'PERSONA A VISITAR', 'MATRICULA', 'REMOLQUE', 'EMPRESA DE TRANSPORTE', 'HORA ENTRADA', 'HORA SALIDA', 'ESTADO'
     ];
     
     const rows = data.map(v => {
