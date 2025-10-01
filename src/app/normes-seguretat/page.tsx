@@ -33,14 +33,14 @@ function SafetyNormsContent() {
         </CardHeader>
         <CardContent className="prose max-w-none">
           <ul>
-            <li>Respecteu la senyalització interna de la fàbrica.</li>
-            <li>És obligatori l’ús dels Equips de Protecció Individual (EPIs) a les zones senyalitzades.</li>
-            <li>Seguiu les indicacions del personal de Menadiona.</li>
-            <li>En cas d’emergència, mantingueu la calma i seguiu les instruccions del personal i la senyalització d’evacuació.</li>
-            <li>No accediu a zones no autoritzades.</li>
-            <li>Prohibit fumar en tot el recinte de la fàbrica, excepte a les zones habilitades per a fer-ho.</li>
-            <li>Informeu de qualsevol incident o condició insegura que observeu.</li>
-            <li>Els vehicles han de respectar les normes de circulació internes i els límits de velocitat.</li>
+            <li>Se seguiran en tot moment les indicacions del personal referent a l'accés a les instal·lacions, càrrega i descàrrega de materials i qualsevol operació que guardi relació amb la prestació del servei.</li>
+            <li>Està prohibit circular amb vehicles de motor en el recinte de la fàbrica. Els vehicles hauran d'aparcar-se en el pàrquing. Si calgués transportar materials o eines, hauran de sol·licitar permís en la Recepció. Respecti el límit de velocitat de 10 Km/h i les normes de circulació.</li>
+            <li>Utilitzar els equips de protecció individual requerits per la normativa vigent de Seguretat i Higiene en el treball. En tot el recinte utilitzar ulleres de seguretat i casc protector, excepte en oficines. Cada empresa ha de proveir als seus empleats dels equips de protecció individual necessaris segons la tasca a realitzar.</li>
+            <li>Prohibit fumar, menjar i ingerir begudes alcohòliques o estupefaents en tot el recinte. Prohibit utilitzar telèfons mòbils en tot el recinte, així com prendre fotografies o gravar.</li>
+            <li>No manipular cap equip, instal·lació, dispositiu electrònic, dispositiu de seguretat, màquina, eina o material del centre si no està autoritzat per a això.</li>
+            <li>Queda terminantment prohibit realitzar qualsevol tipus de foc en les instal·lacions de l'empresa.</li>
+            <li>En cas d'emergència s'ha d'acudir al punt de trobada situada en l'entrada de fàbrica, al costat del pàrquing reservat i seguir les instruccions del Cap d'Emergència.</li>
+            <li>En compliment de l'article 12 del RGPD i l'article 22 de la LOPDGDD, s'Informa que MENADIONA té instal·lat un sistema de videovigilància.</li>
           </ul>
         </CardContent>
         <CardFooter className="flex flex-col items-center gap-4">
@@ -50,7 +50,7 @@ function SafetyNormsContent() {
               htmlFor="accept"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              He llegit i accepto les normes bàsiques de seguretat en les instal·lacions.
+              He llegit i accepto les normes bàsiques de seguretat en les instal.lacions.
             </label>
           </div>
           <div className='flex justify-between gap-4'>
