@@ -3,12 +3,10 @@
 import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ConfigPanel from "./components/ConfigPanel";
-import { useTranslation } from "@/hooks/use-translation";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ConfigPage() {
-  const { t } = useTranslation();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   
@@ -32,9 +30,9 @@ export default function ConfigPage() {
     <PageContainer>
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-4xl">{t('config_panel_title')}</CardTitle>
+          <CardTitle className="font-headline text-4xl">Panell de Configuració</CardTitle>
           <CardDescription>
-            {t('config_panel_description')}
+            Gestionar els departaments, empleats i usuaris de l'aplicació.
           </CardDescription>
         </CardHeader>
         <CardContent>

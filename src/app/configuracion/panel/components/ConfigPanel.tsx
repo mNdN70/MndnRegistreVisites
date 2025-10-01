@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTranslation } from "@/hooks/use-translation";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -57,8 +56,6 @@ export default function ConfigPanel() {
     removeUser,
     loading,
   } = useConfig();
-
-  const { t } = useTranslation();
 
   const [newDepartment, setNewDepartment] = useState("");
   const [newEmployeeName, setNewEmployeeName] = useState("");
@@ -189,11 +186,11 @@ export default function ConfigPanel() {
        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Empleado</DialogTitle>
+            <DialogTitle>Editar Empleat</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onEmployeeUpdateSubmit)} className="space-y-4">
              <div>
-                <Label htmlFor="name">Nombre</Label>
+                <Label htmlFor="name">Nom</Label>
                 <Input id="name" {...register("name")} />
                 {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
             </div>
@@ -204,14 +201,14 @@ export default function ConfigPanel() {
             </div>
 
             <div>
-              <Label htmlFor="department">Departamento</Label>
+              <Label htmlFor="department">Departament</Label>
               <Controller
                 name="department"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder={t('department')} />
+                      <SelectValue placeholder="Departament" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
@@ -230,13 +227,13 @@ export default function ConfigPanel() {
                          <Checkbox id="receivesReportsEdit" checked={field.value} onCheckedChange={field.onChange} disabled={!isEditEmailValid || watchedEmail === ''} />
                     )}
                 />
-                <Label htmlFor="receivesReportsEdit" className={!isEditEmailValid || watchedEmail === '' ? "text-muted-foreground" : ""}>{t('receives_reports')}</Label>
+                <Label htmlFor="receivesReportsEdit" className={!isEditEmailValid || watchedEmail === '' ? "text-muted-foreground" : ""}>Rep informes</Label>
             </div>
              <DialogFooter>
                 <DialogClose asChild>
-                    <Button type="button" variant="outline">{t('cancel')}</Button>
+                    <Button type="button" variant="outline">Cancel·lar</Button>
                 </DialogClose>
-                <Button type="submit">Guardar Cambios</Button>
+                <Button type="submit">Guardar Canvis</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -244,16 +241,16 @@ export default function ConfigPanel() {
       <div className="grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>{t('departments')}</CardTitle>
+            <CardTitle>Departaments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
                 value={newDepartment}
                 onChange={(e) => setNewDepartment(e.target.value)}
-                placeholder={t('new_department')}
+                placeholder="Nou departament"
               />
-              <Button onClick={handleAddDepartment}>{t('add')}</Button>
+              <Button onClick={handleAddDepartment}>Afegir</Button>
             </div>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
               {departments.map((dept) => (
@@ -270,24 +267,24 @@ export default function ConfigPanel() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('employees')}</CardTitle>
+            <CardTitle>Empleats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
              <div className="space-y-2">
                 <Input
                     value={newEmployeeName}
                     onChange={(e) => setNewEmployeeName(e.target.value)}
-                    placeholder={t('employee_name')}
+                    placeholder="Nom de l'empleat"
                 />
                 <Input
                     value={newEmployeeEmail}
                     onChange={(e) => setNewEmployeeEmail(e.target.value)}
-                    placeholder={t('employee_email')}
+                    placeholder="Email de l'empleat"
                     type="email"
                 />
                  <Select onValueChange={setNewEmployeeDept} value={newEmployeeDept}>
                     <SelectTrigger>
-                        <SelectValue placeholder={t('department')} />
+                        <SelectValue placeholder="Departament" />
                     </SelectTrigger>
                     <SelectContent>
                         {departments.map((dept) => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
@@ -304,12 +301,12 @@ export default function ConfigPanel() {
                         htmlFor="receivesReports" 
                         className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!isNewEmployeeEmailValid || newEmployeeEmail === '' ? 'text-muted-foreground' : ''}`}
                     >
-                       {t('receives_reports')}
+                       Rep informes
                     </Label>
                 </div>
              </div>
              <Button onClick={handleAddEmployee} className="w-full">
-                <UserPlus className="mr-2 h-4 w-4"/> {t('add')}
+                <UserPlus className="mr-2 h-4 w-4"/> Afegir
               </Button>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
               {employees.map((emp) => (
@@ -320,7 +317,7 @@ export default function ConfigPanel() {
                      <span className="text-xs text-muted-foreground">{emp.email}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    {emp.receivesReports && <Mail className="h-4 w-4 text-primary" title={t('receives_reports')} />}
+                    {emp.receivesReports && <Mail className="h-4 w-4 text-primary" title="Rep informes" />}
                     <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(emp)}>
                       <Pencil className="h-4 w-4 text-primary" />
                     </Button>
@@ -337,26 +334,26 @@ export default function ConfigPanel() {
 
        <Card>
           <CardHeader>
-            <CardTitle>{t('users')}</CardTitle>
-            <CardDescription>{t('users_description')}</CardDescription>
+            <CardTitle>Usuaris</CardTitle>
+            <CardDescription>Gestionar els usuaris amb accés al panell de configuració.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                placeholder={t('username')}
+                placeholder="Usuari"
                 className="flex-grow"
               />
               <Input
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder={t('password')}
+                placeholder="Contrasenya"
                 type="password"
                 className="flex-grow"
               />
               <Button onClick={handleAddUser} className="w-full sm:w-auto">
-                <KeyRound className="mr-2 h-4 w-4"/> {t('add_user')}
+                <KeyRound className="mr-2 h-4 w-4"/> Afegir Usuari
               </Button>
             </div>
             <ul className="space-y-2 max-h-60 overflow-y-auto">
@@ -376,7 +373,7 @@ export default function ConfigPanel() {
         <div className="flex justify-end">
             <Button onClick={handleLogout} variant="outline">
                 <LogOut className="mr-2 h-4 w-4" />
-                {t('logout')}
+                Sortir
             </Button>
         </div>
     </div>
