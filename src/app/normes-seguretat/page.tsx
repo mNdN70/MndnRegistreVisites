@@ -24,7 +24,7 @@ function SafetyNormsContent() {
 
   return (
     <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-      <Card className="w-full max-w-4xl shadow-xl">
+      <Card className="w-full max-w-4xl shadow-xl bg-white">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
                <Image src="/logo.png" alt="Menadiona Logo" width={100} height={50} />
