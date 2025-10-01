@@ -59,6 +59,11 @@ function SafetyNormsContent() {
               Continua
             </Button>
           </div>
+          <div className="mt-4 text-center">
+            <p className="text-[10px] text-muted-foreground font-body">
+              En compliment del Reglament (UE) 2016/679 (RGPD) i la Llei 3/2018 (LOPDGDD), l'informem que les seves dades seran tractades per 'Menadiona, SL' amb la finalitat de gestió i control de la informació de seguretat de les seves instal·lacions. Pot exercir els seus drets dirigint-se a 'Menadiona, SL' per e-mail a menadiona@menadiona.com. Més informació en www.menadiona.com
+            </p>
+          </div>
         </CardFooter>
       </Card>
     </PageContainer>
