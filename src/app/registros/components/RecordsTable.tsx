@@ -1,6 +1,6 @@
 "use client";
 
-import { useVisits } from "@/hooks/use-visits";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import {
   Table,
   TableBody,
@@ -28,7 +28,7 @@ export default function RecordsTable() {
     date, 
     setDate, 
     getFilteredVisits 
-  } = useVisits();
+  } = useVisitsContext();
 
   const filteredVisits = getFilteredVisits();
   const { t, language } = useTranslation();

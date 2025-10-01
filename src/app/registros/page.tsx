@@ -7,14 +7,14 @@ import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useVisits } from "@/hooks/use-visits";
 import { useConfig } from "@/hooks/use-config";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import { useCallback } from "react";
 
 export default function RecordsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { exportToCSV } = useVisits();
+  const { exportToCSV } = useVisitsContext();
   const { getReportRecipients } = useConfig();
   
   const handleExport = useCallback(() => {
