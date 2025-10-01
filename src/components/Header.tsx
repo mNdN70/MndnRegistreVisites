@@ -19,7 +19,7 @@ export function Header() {
   const { t, setLanguage } = useTranslation();
 
   const navLinks = [
-    { href: "/consultas", label: 'Consultes' },
+    { href: "/consultas", label: 'Registres' },
     { href: "/configuracion/panel", label: 'Configuració' },
   ];
 
