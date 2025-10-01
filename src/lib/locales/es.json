@@ -1,3 +1,4 @@
+
 {
     "welcome_to_menadiona": "Bienvenido a Menadiona",
     "entry": "Entrada",
@@ -8,6 +9,7 @@
     "exit_description": "Registrar la salida de un visitante.",
     "general_entry_title": "Registro de Entrada General",
     "general_entry_card_description": "Por favor, complete todos los campos requeridos.",
+    "dni_nie": "DNI / NIE",
     "dni_nie_placeholder": "Ej: 12345678A o Y1234567Z",
     "name_and_surnames": "Nombre y Apellidos",
     "name_placeholder": "Ej: Juan Pérez",
@@ -49,15 +51,6 @@
     "privacy_policy_required": "Debe aceptar la política de tratamiento de datos.",
     "haulier_company_required": "La empresa de transporte es obligatoria.",
     "license_plate_required": "La matrícula es obligatoria.",
-    "duplicated_department": "Departamento duplicado",
-    "department_added": "Departamento añadido",
-    "department_deleted": "Departamento eliminado",
-    "department_deleted_detail": "Los empleados de este departamento también han sido eliminados.",
-    "duplicated_employee": "Empleado duplicado",
-    "employee_added": "Empleado añadido",
-    "employee_deleted": "Empleado eliminado",
-    "no_data_to_export": "No hay datos para exportar",
-    "export_completed": "Exportación completada",
     "duplicate_entry": "Entrada Duplicada",
     "duplicate_entry_detail": "Ya existe una visita activa para este DNI/NIE. Debe registrar la salida antes de una nueva entrada.",
     "entry_registered": "Entrada Registrada",
@@ -65,17 +58,5 @@
     "exit_registration_error": "Error al Registrar Salida",
     "no_active_visit_today": "No se encontró una visita activa para este DNI/NIE.",
     "exit_registered": "Salida Registrada",
-    "exit_registered_detail": "Se ha registrado la salida para {name}.",
-    "error_loading_config": "No se pudo cargar la configuración desde la base de datos.",
-    "error_adding_department": "No se pudo añadir el departamento.",
-    "error_deleting_department": "No se pudo eliminar el departamento.",
-    "error_adding_employee": "No se pudo añadir el empleado.",
-    "employee_not_found": "Empleado no encontrado.",
-    "error_deleting_employee": "No se pudo eliminar el empleado.",
-    "duplicated_user": "Nombre de usuario duplicado.",
-    "user_added": "Usuario añadido.",
-    "error_adding_user": "No se pudo añadir el usuario.",
-    "cannot_delete_last_user": "No se puede eliminar el último usuario.",
-    "user_deleted": "Usuario eliminado.",
-    "error_deleting_user": "No se pudo eliminar el usuario."
+    "exit_registered_detail": "Se ha registrado la salida para {name}."
 }
