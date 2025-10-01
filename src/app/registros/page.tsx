@@ -3,7 +3,6 @@
 import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import RecordsTable from "./components/RecordsTable";
-import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,7 +11,6 @@ import { useVisitsContext } from "@/hooks/use-visits-context";
 import { useCallback } from "react";
 
 export default function RecordsPage() {
-  const { t } = useTranslation();
   const router = useRouter();
   const { exportToCSV } = useVisitsContext();
   const { getReportRecipients } = useConfig();
@@ -28,19 +26,19 @@ export default function RecordsPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
-                <CardTitle className="font-headline text-4xl">{t('records_title')}</CardTitle>
+                <CardTitle className="font-headline text-4xl">Registre Històric de Visites</CardTitle>
                 <CardDescription>
-                  {t('records_description')}
+                  Consulta i exporta tots els registres d'entrada i sortida.
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleExport}>
                     <Download className="mr-2 h-4 w-4" />
-                    {t('export_to_csv')}
+                    Exportar a CSV
                 </Button>
                 <Button variant="outline" onClick={() => router.back()}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('back')}
+                    Tornar
                 </Button>
               </div>
           </div>

@@ -31,7 +31,7 @@ export default function RecordsTable() {
   } = useVisitsContext();
 
   const filteredVisits = getFilteredVisits();
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
 
   if (loading) {
     return (
@@ -62,7 +62,7 @@ export default function RecordsTable() {
       }
       return format(date.from, "LLL dd, y", { locale: locales[language] });
     }
-    return <span>{t('select_range')}</span>;
+    return <span>Seleccioneu un rang</span>;
   };
 
 
@@ -98,19 +98,19 @@ export default function RecordsTable() {
       </div>
       {filteredVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">{t('no_records_in_range')}</p>
+          <p className="text-lg">No hi ha registres de visites en el rang seleccionat.</p>
         </div>
       ) : (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('name')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('id')}</TableHead>
-                <TableHead>{t('entry')}</TableHead>
-                <TableHead>{t('exit_time')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('visiting')}</TableHead>
-                <TableHead>{t('status')}</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead className="hidden lg:table-cell">ID</TableHead>
+                <TableHead>Entrada</TableHead>
+                <TableHead>Sortida</TableHead>
+                <TableHead className="hidden md:table-cell">Visita a</TableHead>
+                <TableHead>Estat</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -127,11 +127,11 @@ export default function RecordsTable() {
                   <TableCell className="hidden md:table-cell">{visit.personToVisit}</TableCell>
                   <TableCell>
                     {visit.autoExit ? (
-                        <Badge variant="destructive">{t('auto_exit')}</Badge>
+                        <Badge variant="destructive">Sortida automàtica</Badge>
                     ) : visit.exitTime ? (
-                      <Badge variant="outline">{t('finished')}</Badge>
+                      <Badge variant="outline">Finalitzada</Badge>
                     ) : (
-                      <Badge variant="default" className="bg-primary">{t('active')}</Badge>
+                      <Badge variant="default" className="bg-primary">Activa</Badge>
                     )}
                   </TableCell>
                 </TableRow>
