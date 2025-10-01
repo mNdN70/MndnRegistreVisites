@@ -215,7 +215,7 @@ export const useVisits = () => {
     }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
   
-  const createCSV = (data: AnyVisit[], filename: string, recipients: string[] = []) => {
+    const createCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[] = []) => {
     if (data.length === 0) {
       toast({
         title: t('no_data_to_export'),
@@ -273,16 +273,16 @@ export const useVisits = () => {
     }
 
     toast({ title: t('export_completed') });
-  };
+  }, [toast, t]);
 
   const exportToCSV = useCallback((filename: string, recipients: string[]) => {
     const data = getFilteredVisits();
     createCSV(data, filename, recipients);
-  }, [getFilteredVisits, t]);
+  }, [getFilteredVisits, createCSV]);
 
   const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
     createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, t]);
+  }, [getActiveVisits, createCSV]);
 
 
   return { loading, addVisit, registerExit, getActiveVisits, exportToCSV, exportActiveVisitsToCSV, date, setDate, getFilteredVisits };
