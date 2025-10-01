@@ -41,7 +41,7 @@ function SafetyNormsContent() {
             <li>Queda terminantment prohibit realitzar qualsevol tipus de foc en les instal·lacions de l'empresa.</li>
             <li>En cas d'emergència s'ha d'acudir al punt de trobada situada en l'entrada de fàbrica, al costat del pàrquing reservat i seguir les instruccions del Cap d'Emergència.</li>
             <div className="flex justify-center my-4">
-                <Image src="/punt_reunio.png" alt="Punt de Trobada" width={400} height={225} />
+                <Image src="/punt_reunio.png" alt="Punt de Trobada" width={200} height={113} />
             </div>
             <li>En compliment de l'article 12 del RGPD i l'article 22 de la LOPDGDD, s'Informa que MENADIONA té instal·lat un sistema de videovigilància.</li>
           </ul>
