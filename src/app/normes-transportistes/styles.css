@@ -1,0 +1,8 @@
+.prose ul {
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.prose ul > li {
+  margin-bottom: 0.5rem;
+}
