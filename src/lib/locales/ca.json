@@ -116,5 +116,17 @@
     "cannot_delete_last_user": "No es pot eliminar l'últim usuari.",
     "user_deleted": "Usuari eliminat.",
     "error_deleting_user": "No s'ha pogut eliminar l'usuari.",
-    "back": "Tornar"
+    "back": "Tornar",
+    "safety_norms_title": "NORMES BÀSIQUES DE SEGURETAT EN LES INSTAL.LACIONS: PERSONAL EXTERN",
+    "safety_norm_1": "Se seguiran en tot moment les indicacions del personal referent a l'accés a les instal.lacions, càrrega i descàrrega de materials i qualsevol operació que guardi relació amb la prestació del servei.",
+    "safety_norm_2": "Està prohibit circular amb vehicles de motor en el recinte de la fàbrica. Els vehicles hauran d'aparcar-se en el pàrquing. Si calgués transportar materials o eines, hauran de sol·licitar permís en la Recepció. Respecti el límit de velocitat de 10 Km/h i les normes de circulació.",
+    "safety_norm_3": "Utilitzar els equips de protecció individual requerits per la normativa vigent de Seguretat i Higiene en el treball. En tot el recinte utilitzar ulleres de seguretat i casc protector, excepte en oficines. Cada empresa ha de proveir als seus empleats dels equips de protecció individual necessaris segons la tasca a realitzar.",
+    "safety_norm_4": "Prohibit fumar, menjar i ingerir begudes alcohòliques o estupefaents en tot el recinte. Prohibit utilitzar telèfons mòbils en tot el recinte, així com prendre fotografies o gravar.",
+    "safety_norm_5": "No manipular cap equip, instal·lació, dispositiu electrònic, dispositiu de seguretat, màquina, eina o material del centre si no està autoritzat per a això.",
+    "safety_norm_6": "Queda terminantment prohibit realitzar qualsevol tipus de foc en les instal·lacions de l'empresa.",
+    "safety_norm_7": "En cas d'emergència s'ha d'acudir al punt de trobada situada en l'entrada de fàbrica, al costat del pàrquing reservat i seguir les instruccions del Cap d'Emergència.",
+    "safety_norm_8": "En compliment de l'article 12 del RGPD i l'article 22 de la LOPDGDD, s'Informa que MENADIONA té instal·lat un sistema de videovigilància.",
+    "accept_safety_norms": "He llegit i accepto les normes bàsiques de seguretat en les instal.lacions.",
+    "continue": "Continua",
+    "gdpr_text": "En compliment del Reglament (UE) 2016/679 (RGPD) i la Llei 3/2018 (LOPDGDD), l'informem que les seves dades seran tractades per 'Menadiona, SL' amb la finalitat de gestió i control de la informació de seguretat de les seves instal·lacions. Pot exercir els seus drets dirigint-se a 'Menadiona, SL' per e-mail a menadiona@menadiona.com. Més informació en www.menadiona.com"
 }
