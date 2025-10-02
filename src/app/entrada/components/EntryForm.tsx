@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +30,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { useVisitSearch } from "@/hooks/use-visit-search";
 
 const getFormSchema = (t: (key: string) => string) => z.object({
   id: z.string().min(1, t('dni_nie_required')),
@@ -64,6 +66,20 @@ export default function EntryForm() {
       privacyPolicyAccepted: false,
     },
   });
+
+  const dniId = form.watch('id');
+  const { visitData, loading: visitLoading } = useVisitSearch(dniId);
+
+  useEffect(() => {
+    if (visitData) {
+      form.setValue('name', visitData.name, { shouldValidate: true });
+      form.setValue('company', visitData.company, { shouldValidate: true });
+      if (employees.some(emp => emp.name === visitData.personToVisit)) {
+        form.setValue('personToVisit', visitData.personToVisit, { shouldValidate: true });
+      }
+    }
+  }, [visitData, form, employees]);
+
 
   const privacyPolicyAccepted = form.watch("privacyPolicyAccepted");
   const personToVisit = form.watch("personToVisit");
@@ -144,7 +160,7 @@ export default function EntryForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('person_to_visit')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={configLoading}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={configLoading}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={configLoading ? t('loading') : t('select_person')} />
@@ -236,8 +252,8 @@ export default function EntryForm() {
           />
           <div className="flex justify-between gap-4">
             <Button type="button" variant="outline" onClick={() => router.push('/')}>{t('cancel')}</Button>
-            <Button type="submit" disabled={!privacyPolicyAccepted || isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={!privacyPolicyAccepted || isSubmitting || visitLoading}>
+              {(isSubmitting || visitLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('register_entry')}
             </Button>
           </div>
