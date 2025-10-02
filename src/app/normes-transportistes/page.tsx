@@ -31,7 +31,7 @@ function SafetyNormsContent() {
             <div className="mx-auto mb-4">
                <Image src="/logo.png" alt="Menadiona Logo" width={100} height={50} />
             </div>
-          <CardTitle className="font-headline text-2xl md:text-3xl">{t('safety_norms_title')}</CardTitle>
+          <CardTitle className="font-headline text-2xl md:text-3xl">{t('transporter_safety_norms_title')}</CardTitle>
         </CardHeader>
         <CardContent className="prose max-w-none">
           <ul>
