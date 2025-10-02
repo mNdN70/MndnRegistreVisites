@@ -106,7 +106,8 @@ export default function RecordsTable() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nom</TableHead>
-                <TableHead className="hidden lg:table-cell">ID</TableHead>
+                <TableHead className="hidden lg:table-cell">DNI/NIE</TableHead>
+                <TableHead className="hidden lg:table-cell">Empresa</TableHead>
                 <TableHead>Entrada</TableHead>
                 <TableHead>Sortida</TableHead>
                 <TableHead className="hidden md:table-cell">Visita a</TableHead>
@@ -118,6 +119,7 @@ export default function RecordsTable() {
                 <TableRow key={visit.docId}>
                   <TableCell className="font-medium">{visit.name}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{visit.id}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{visit.company}</TableCell>
                   <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: locales[language] })}</TableCell>
                   <TableCell>
                     {visit.exitTime
