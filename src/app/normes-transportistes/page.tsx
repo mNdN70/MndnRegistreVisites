@@ -36,8 +36,8 @@ function SafetyNormsContent() {
         <CardContent className="prose max-w-none">
           <ul>
             <li>{t('safety_norm_1')}</li>
-            <li>{t('safety_norm_2')}</li>
-            <li>{t('safety_norm_3')}</li>
+            <li>{t('transporter_safety_norm_2')}</li>
+            <li>{t('transporter_safety_norm_3')}</li>
             <li>{t('safety_norm_4')}</li>
             <li>{t('safety_norm_5')}</li>
             <li>{t('safety_norm_6')}</li>
