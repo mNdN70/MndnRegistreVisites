@@ -36,7 +36,7 @@ export default function Home() {
       icon: <User className="h-12 w-12" />,
     },
     {
-      href: "/normes-seguretat?type=transporter",
+      href: "/normes-transportistes",
       titleKey: "transporter_entry",
       descriptionKey: "transporter_entry_description",
       icon: <Truck className="h-12 w-12" />,
