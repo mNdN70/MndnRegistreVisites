@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BaseVisit } from '@/lib/types';
 
 const VISITS_COLLECTION = 'visits';
@@ -34,16 +34,16 @@ export const useVisitSearch = (dni: string) => {
       try {
         const q = query(
           collection(db, VISITS_COLLECTION),
-          where('id', '==', debouncedDni.toUpperCase()),
-          orderBy('entryTime', 'desc')
+          where('id', '==', debouncedDni.toUpperCase())
         );
         
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          // The query is ordered by entryTime descending, so the first doc is the latest visit.
-          const lastVisit = querySnapshot.docs[0].data() as BaseVisit;
-          setVisitData(lastVisit);
+          const visits = querySnapshot.docs.map(doc => doc.data() as BaseVisit);
+          // Sort client-side to find the latest visit
+          visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+          setVisitData(visits[0]);
         } else {
           setVisitData(null);
         }
