@@ -1,3 +1,4 @@
+
 {
     "active_visits": "Visites Actives",
     "consult_records": "Consultar Registres",
@@ -120,7 +121,7 @@
     "safety_norms_title": "NORMES BÀSIQUES DE SEGURETAT EN LES INSTAL.LACIONS: PERSONAL EXTERN",
     "transporter_safety_norms_title": "NORMES BÀSIQUES DE SEGURETAT EN LES INSTAL.LACIONS: TRANSPORTISTES",
     "safety_norm_1": "Se seguiran en tot moment les indicacions del personal referent a l'accés a les instal.lacions, càrrega i descàrrega de materials i qualsevol operació que guardi relació amb la prestació del servei.",
-    "safety_norm_2": "Està prohibit circular amb vehicles de motor en el recinte de la fàbrica. Els vehicles hauran d'aparcar-se en el pàrquing. Si calgués transportar materials o eines, hauran de sol·licitar permís en la Recepció. Respecti el límit de velocitat de 10 Km/h i les normes de circulació.",
+    "safety_norm_2": "Respecti el límit de velocitat de 10 Km/h i les normes de circulació.",
     "safety_norm_3": "Utilitzar els equips de protecció individual requerits per la normativa vigent de Seguretat i Higiene en el treball. En tot el recinte utilitzar ulleres de seguretat i casc protector, excepte en oficines. Cada empresa ha de proveir als seus empleats dels equips de protecció individual necessaris segons la tasca a realitzar.",
     "transporter_safety_norm_2": "Respecti el límit de velocitat de 10 Km/h i les normes de circulació.",
     "transporter_safety_norm_3": "Utilitzar els equips de protecció individual requerits. En tot el recinte utilitzar ulleres de seguretat i casc protector.",
@@ -133,3 +134,5 @@
     "continue": "Continua",
     "gdpr_text": "En compliment del Reglament (UE) 2016/679 (RGPD) i la Llei 3/2018 (LOPDGDD), l'informem que les seves dades seran tractades per 'Menadiona, SL' amb la finalitat de gestió i control de la informació de seguretat de les seves instal·lacions. Pot exercir els seus drets dirigint-se a 'Menadiona, SL' per e-mail a menadiona@menadiona.com. Més informació en www.menadiona.com"
 }
+
+    

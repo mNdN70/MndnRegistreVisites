@@ -62,7 +62,7 @@
     "safety_norms_title": "NORMAS BÁSICAS DE SEGURIDAD EN LAS INSTALACIONES: PERSONAL EXTERNO",
     "transporter_safety_norms_title": "NORMAS BÁSICAS DE SEGURIDAD EN LAS INSTALACIONES: TRANSPORTISTAS",
     "safety_norm_1": "Se seguirán en todo momento las indicaciones del personal referente al acceso a las instalaciones, carga y descarga de materiales y cualquier operación que guarde relación con la prestación del servicio.",
-    "safety_norm_2": "Está prohibido circular con vehículos de motor en el recinto de la fábrica. Los vehículos deberán aparcarse en el parking. Si fuera necesario transportar materiales o herramientas, deberán solicitar permiso en la Recepción. Respete el límite de velocidad de 10 Km/h y las normas de circulación.",
+    "safety_norm_2": "Respete el límite de velocidad de 10 Km/h y las normas de circulación.",
     "safety_norm_3": "Utilizar los equipos de protección individual requeridos por la normativa vigente de Seguridad e Higiene en el trabajo. En todo el recinto utilizar gafas de seguridad y casco protector, excepto en oficinas. Cada empresa debe proveer a sus empleados de los equipos de protección individual necesarios según la tarea a realizar.",
     "transporter_safety_norm_2": "Respete el límite de velocidad de 10 Km/h y las normas de circulación.",
     "transporter_safety_norm_3": "Utilizar los equipos de protección individual requeridos. En todo el recinto utilizar gafas de seguridad y casco protector.",
@@ -75,3 +75,5 @@
     "continue": "Continuar",
     "gdpr_text": "En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la Ley 3/2018 (LOPDGDD), le informamos que sus datos serán tratados por 'Menadiona, SL' con la finalidad de gestión y control de la información de seguridad de sus instalaciones. Puede ejercer sus derechos dirigiéndose a 'Menadiona, SL' por e-mail a menadiona@menadiona.com. Más información en www.menadiona.com"
 }
+
+    
