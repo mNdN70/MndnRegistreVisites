@@ -38,7 +38,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <div className="mr-auto flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-headline text-2xl font-bold">Menadiona</span>
+            <span className="font-headline text-2xl font-bold">MENADIONA</span>
           </Link>
           <nav className="hidden gap-6 text-lg font-medium md:flex">
             {navLinks.map((link) => (
@@ -92,7 +92,7 @@ export function Header() {
                     href="/"
                     className="flex items-center gap-2 text-lg font-semibold"
                     >
-                    <span className="sr-only">Menadiona</span>
+                    <span className="sr-only">MENADIONA</span>
                     </Link>
                     {navLinks.map((link) => (
                       link.label && (

@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { LanguageProvider } from '@/hooks/use-translation';
 
 export const metadata: Metadata = {
-  title: 'Menadiona',
+  title: 'MENADIONA',
   description: 'Control de visitas de una empresa',
 };
 

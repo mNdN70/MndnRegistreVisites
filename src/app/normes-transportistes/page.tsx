@@ -29,7 +29,7 @@ function SafetyNormsContent() {
       <Card className="w-full max-w-4xl shadow-xl bg-white">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-               <Image src="/logo.png" alt="Menadiona Logo" width={100} height={50} />
+               <Image src="/logo.png" alt="MENADIONA Logo" width={100} height={50} />
             </div>
           <CardTitle className="font-headline text-2xl md:text-3xl">{t('transporter_safety_norms_title')}</CardTitle>
         </CardHeader>

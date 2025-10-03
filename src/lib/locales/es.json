@@ -1,6 +1,6 @@
 
 {
-    "welcome_to_menadiona": "Bienvenido a Menadiona",
+    "welcome_to_menadiona": "Bienvenido a MENADIONA",
     "entry": "Entrada",
     "general_entry_description": "Registrar una nueva visita general.",
     "transporter_entry": "Entrada Transportistas",
@@ -75,5 +75,3 @@
     "transporter_safety_norm_2": "Respete el límite de velocidad de 10 Km/h y las normas de circulación.",
     "transporter_safety_norm_3": "Utilizar los equipos de protección individual requeridos. En todo el recinto utilizar gafas de seguridad y casco protector."
 }
-
-    

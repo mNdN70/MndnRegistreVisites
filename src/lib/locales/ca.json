@@ -2,7 +2,7 @@
 {
     "active_visits": "Visites Actives",
     "consult_records": "Consultar Registres",
-    "welcome_to_menadiona": "Benvingut a Menadiona",
+    "welcome_to_menadiona": "Benvingut a MENADIONA",
     "entry": "Entrada",
     "general_entry_description": "Registrar una nova visita general.",
     "transporter_entry": "Entrada Transportistes",
@@ -134,5 +134,3 @@
     "transporter_safety_norm_2": "Respecti el límit de velocitat de 10 Km/h i les normes de circulació.",
     "transporter_safety_norm_3": "Utilitzar els equips de protecció individual requerits. En tot el recinte utilitzar ulleres de seguretat i casc protector."
 }
-
-    
