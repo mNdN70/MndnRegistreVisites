@@ -76,7 +76,7 @@ export const useConfig = () => {
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-      await seedInitialData();
+      // await seedInitialData(); // This was causing the error on production
 
       const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
       const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
@@ -88,9 +88,22 @@ export const useConfig = () => {
         getDocs(usersQuery)
       ]);
       
-      setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
-      setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-      setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
+      if (departmentsSnapshot.empty && employeesSnapshot.empty) {
+        await seedInitialData();
+        // Refetch after seeding
+        const [depts, emps, usrs] = await Promise.all([
+            getDocs(departmentsQuery),
+            getDocs(employeesQuery),
+            getDocs(usersQuery)
+        ]);
+        setDepartments(depts.docs.map(doc => doc.data().name).sort());
+        setEmployees(emps.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+        setUsers(usrs.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
+      } else {
+        setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
+        setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
+        setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
+      }
 
     } catch (error) {
       console.error('Error fetching config from Firestore', error);
