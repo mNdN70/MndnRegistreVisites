@@ -3,8 +3,9 @@
 import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LoginForm from "./components/LoginForm";
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginPageContent() {
   return (
     <PageContainer className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
       <Card className="w-full max-w-md shadow-xl bg-white">
@@ -20,4 +21,13 @@ export default function LoginPage() {
       </Card>
     </PageContainer>
   );
+}
+
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Carregant...</div>}>
+      <LoginPageContent />
+    </Suspense>
+  )
 }
