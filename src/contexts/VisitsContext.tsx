@@ -34,6 +34,7 @@ interface VisitsContextType {
     getFilteredVisits: () => AnyVisit[];
     exportToCSV: (filename: string, recipients: string[]) => void;
     exportActiveVisitsToCSV: (recipients: string[]) => void;
+    fetchVisits: () => Promise<void>;
 }
 
 export const VisitsContext = createContext<VisitsContextType | undefined>(undefined);
@@ -116,9 +117,11 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast, t]);
 
-  useEffect(() => {
-    fetchVisits();
-  }, [fetchVisits]);
+   useEffect(() => {
+    // We will no longer fetch all visits on initial load to prevent permission errors on Netlify.
+    // Data will be loaded on demand (e.g., when viewing records).
+    setLoading(false);
+  }, []);
 
     const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     try {
@@ -178,7 +181,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       }
       
       addDoc(collection(db, VISITS_COLLECTION), newVisit).then((docRef) => {
-        setVisits(prev => [{ docId: docRef.id, ...newVisit }, ...prev]);
+        setVisits(prev => [{ docId: docRef.id, ...newVisit } as AnyVisit, ...prev]);
       }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: VISITS_COLLECTION,
@@ -351,7 +354,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   }, [getActiveVisits, createCSV]);
 
   return (
-    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, exportActiveVisitsToCSV }}>
+    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, exportActiveVisitsToCSV, fetchVisits }}>
       {children}
     </VisitsContext.Provider>
   );
