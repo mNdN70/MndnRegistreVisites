@@ -41,7 +41,7 @@ export const VisitsContext = createContext<VisitsContextType | undefined>(undefi
 
 export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const [date, setDate] = useState<DateRange | undefined>({
@@ -115,10 +115,10 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [toast, t]);
+  }, [toast]);
 
    useEffect(() => {
-    // We will no longer fetch all visits on initial load to prevent permission errors on Netlify.
+    // We no longer fetch all visits on initial load to prevent permission errors.
     // Data will be loaded on demand (e.g., when viewing records).
     setLoading(false);
   }, []);
@@ -180,16 +180,17 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
         };
       }
       
-      addDoc(collection(db, VISITS_COLLECTION), newVisit).then((docRef) => {
-        setVisits(prev => [{ docId: docRef.id, ...newVisit } as AnyVisit, ...prev]);
-      }).catch(async (serverError) => {
+      const docRef = await addDoc(collection(db, VISITS_COLLECTION), newVisit).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: VISITS_COLLECTION,
             operation: 'create',
             requestResourceData: newVisit,
         });
         errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
       });
+
+      setVisits(prev => [{ docId: docRef.id, ...newVisit } as AnyVisit, ...prev]);
 
       toast({
         title: t('entry_registered'),
@@ -239,7 +240,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const exitTime = new Date().toISOString();
       const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.docId);
 
-      updateDoc(visitDocRef, {
+      await updateDoc(visitDocRef, {
         exitTime: exitTime,
       }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -248,6 +249,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
             requestResourceData: { exitTime: exitTime },
         });
         errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
       });
       
       setVisits(prevVisits => prevVisits.map(v => v.docId === latestVisitDoc.docId ? {...v, exitTime: exitTime} : v))

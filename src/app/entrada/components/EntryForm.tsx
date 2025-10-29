@@ -100,7 +100,8 @@ export default function EntryForm() {
     const result = await addVisit({ ...values, id: values.id.toUpperCase(), type: 'general' });
     if (result.success) {
       form.reset();
-      setTimeout(() => router.push("/"), 2000);
+      const timer = setTimeout(() => router.push("/"), 2000);
+      return () => clearTimeout(timer);
     } else {
       setIsSubmitting(false);
     }

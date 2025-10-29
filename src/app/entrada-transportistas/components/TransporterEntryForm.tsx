@@ -117,7 +117,8 @@ export default function TransporterEntryForm() {
     });
     if (result.success) {
       form.reset();
-      setTimeout(() => router.push("/"), 2000);
+      const timer = setTimeout(() => router.push("/"), 2000);
+      return () => clearTimeout(timer);
     } else {
       setIsSubmitting(false);
     }
