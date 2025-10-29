@@ -7,10 +7,12 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BaseVisit } from '@/lib/types';
 import { errorEmitter } from '@/lib/error-emitter';
 import { FirestorePermissionError } from '@/lib/errors';
+import { useVisitsContext } from './use-visits-context';
 
 const VISITS_COLLECTION = 'visits';
 
 export const useVisitSearch = (dni: string) => {
+  const { visits } = useVisitsContext();
   const [visitData, setVisitData] = useState<BaseVisit | null>(null);
   const [loading, setLoading] = useState(false);
   const [debouncedDni, setDebouncedDni] = useState(dni);
@@ -31,43 +33,23 @@ export const useVisitSearch = (dni: string) => {
       return;
     }
 
-    const fetchLastVisit = async () => {
+    const findLastVisitInMemory = () => {
       setLoading(true);
-      try {
-        const q = query(
-          collection(db, VISITS_COLLECTION),
-          where('id', '==', debouncedDni.toUpperCase())
-        );
-        
-        const querySnapshot = await getDocs(q).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: VISITS_COLLECTION,
-                operation: 'list'
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw permissionError;
-        });
+      const matchingVisits = visits.filter(
+        (visit) => visit.id.toUpperCase() === debouncedDni.toUpperCase()
+      );
 
-        if (!querySnapshot.empty) {
-          const visits = querySnapshot.docs.map(doc => doc.data() as BaseVisit);
-          // Sort client-side to find the latest visit
-          visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
-          setVisitData(visits[0]);
-        } else {
-          setVisitData(null);
-        }
-      } catch (error) {
-        if (!(error instanceof FirestorePermissionError)) {
-            console.error('Error fetching last visit:', error);
-        }
+      if (matchingVisits.length > 0) {
+        matchingVisits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+        setVisitData(matchingVisits[0]);
+      } else {
         setVisitData(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
-    fetchLastVisit();
-  }, [debouncedDni]);
+    findLastVisitInMemory();
+  }, [debouncedDni, visits]);
 
   return { visitData, loading };
 };
