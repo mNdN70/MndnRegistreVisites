@@ -53,6 +53,7 @@ export default function TransporterEntryForm() {
   const { addVisit } = useVisits();
   const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [redirect, setRedirect] = useState(false);
   const { t } = useTranslation();
 
   const formSchema = getFormSchema(t);
@@ -106,19 +107,22 @@ export default function TransporterEntryForm() {
     }
   }, [personToVisit, employees, form]);
 
+  useEffect(() => {
+    if (redirect) {
+      const timer = setTimeout(() => router.push("/"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [redirect, router]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     const result = await addVisit({ 
         ...values, 
-        id: values.id.toUpperCase(),
-        licensePlate: values.licensePlate.toUpperCase(),
-        trailerLicensePlate: values.trailerLicensePlate?.toUpperCase(),
         type: 'transporter' 
     });
     if (result.success) {
       form.reset();
-      const timer = setTimeout(() => router.push("/"), 2000);
-      return () => clearTimeout(timer);
+      setRedirect(true);
     } else {
       setIsSubmitting(false);
     }
@@ -325,5 +329,7 @@ export default function TransporterEntryForm() {
   );
 }
 
+
+    
 
     

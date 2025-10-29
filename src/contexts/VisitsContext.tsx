@@ -118,12 +118,12 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast]);
 
-   useEffect(() => {
-    // Data will be loaded on demand (e.g., when viewing records or active visits).
-    fetchVisits();
-  }, [fetchVisits]);
+  // Load visits on demand from pages that need it.
+  // useEffect(() => {
+  //   fetchVisits();
+  // }, [fetchVisits]);
 
-    const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
+    const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
@@ -362,4 +362,5 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+    
     
