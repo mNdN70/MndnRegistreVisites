@@ -16,10 +16,10 @@ import {
   setDoc,
   addDoc,
   updateDoc,
-  getCountFromServer
 } from 'firebase/firestore';
 import { errorEmitter } from '@/lib/error-emitter';
 import { FirestorePermissionError } from '@/lib/errors';
+import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from '@/lib/constants';
 
 const DEPARTMENTS_COLLECTION = 'departments';
 const EMPLOYEES_COLLECTION = 'employees';
@@ -40,90 +40,49 @@ export interface User {
 }
 
 export const useConfig = () => {
-  const [departments, setDepartments] = useState<string[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<string[]>(INITIAL_DEPARTMENTS.sort());
+  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES.sort((a,b) => a.name.localeCompare(b.name)));
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
   
-  const seedInitialData = useCallback(async () => {
-    try {
-      const batch = writeBatch(db);
-      
-      const departmentsCountSnapshot = await getCountFromServer(collection(db, DEPARTMENTS_COLLECTION));
-      if(departmentsCountSnapshot.data().count === 0) {
-        const deptsToAdd = ['Recursos Humanos', 'Ventas', 'Marketing', 'Producción', 'IT'];
-        if(deptsToAdd.length > 0) {
-          deptsToAdd.forEach(dept => {
-            const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
-            batch.set(docRef, { name: dept });
-          });
-        }
-      }
-
-      const employeesCountSnapshot = await getCountFromServer(collection(db, EMPLOYEES_COLLECTION));
-      if(employeesCountSnapshot.data().count === 0) {
-          // No initial employees
-      }
-      
-      const usersCountSnapshot = await getCountFromServer(collection(db, USERS_COLLECTION));
-      if(usersCountSnapshot.data().count === 0) {
-        const userRef = doc(collection(db, USERS_COLLECTION));
-        batch.set(userRef, { username: 'admin', password: 'admin'});
-      }
-
-      await batch.commit().catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: '[batch]',
-            operation: 'create',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-    } catch(error) {
-       // Errors are already caught by individual getCountFromServer if they fail
-    }
-  }, []);
-
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-      const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
+      // Departments and Employees are now loaded from constants.ts
+      setDepartments(INITIAL_DEPARTMENTS.sort());
+      
+      // We still fetch employees and users from firebase for the config panel,
+      // but the initial state is populated from constants so the forms work.
       const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
       const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
 
-      const departmentsSnapshot = await getDocs(departmentsQuery).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({ path: DEPARTMENTS_COLLECTION, operation: 'list' });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
       const employeesSnapshot = await getDocs(employeesQuery).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({ path: EMPLOYEES_COLLECTION, operation: 'list' });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
+        // Non-critical, forms will work with initial data. Maybe show a toast.
+        console.error("Could not fetch employees for config panel:", serverError.message);
+        return null;
       });
+
       const usersSnapshot = await getDocs(usersQuery).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({ path: USERS_COLLECTION, operation: 'list' });
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
       });
       
-      if (departmentsSnapshot.empty && employeesSnapshot.empty && usersSnapshot.empty) {
-        await seedInitialData();
-        // Refetch after seeding
-         const [depts, emps, usrs] = await Promise.all([
-            getDocs(departmentsQuery),
-            getDocs(employeesQuery),
-            getDocs(usersQuery)
-        ]);
-        setDepartments(depts.docs.map(doc => doc.data().name).sort());
-        setEmployees(emps.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-        setUsers(usrs.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
-      } else {
-        setDepartments(departmentsSnapshot.docs.map(doc => doc.data().name).sort());
-        setEmployees(employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee)).sort((a,b) => a.name.localeCompare(b.name)));
-        setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
+      if (employeesSnapshot) {
+         const dbEmployees = employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee));
+         // Combine initial employees with DB employees, avoiding duplicates
+         const allEmployees = [...INITIAL_EMPLOYEES];
+         dbEmployees.forEach(dbEmp => {
+           if (!allEmployees.some(emp => emp.name.toLowerCase() === dbEmp.name.toLowerCase())) {
+             allEmployees.push(dbEmp);
+           }
+         });
+         setEmployees(allEmployees.sort((a,b) => a.name.localeCompare(b.name)));
       }
+      
+      setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
 
     } catch (error) {
       if (!(error instanceof FirestorePermissionError)) {
@@ -137,7 +96,7 @@ export const useConfig = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, seedInitialData, t]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchConfig();
