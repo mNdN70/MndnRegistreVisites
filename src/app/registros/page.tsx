@@ -26,19 +26,19 @@ export default function RecordsPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
-                <CardTitle className="font-headline text-4xl">Registre Històric de Visites</CardTitle>
+                <CardTitle className="font-headline text-4xl">{t('records_title')}</CardTitle>
                 <CardDescription>
-                  Consulta i exporta tots els registres d'entrada i sortida.
+                  {t('records_description')}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleExport}>
                     <Download className="mr-2 h-4 w-4" />
-                    Exportar a CSV
+                    {t('export_to_csv')}
                 </Button>
                 <Button variant="outline" onClick={() => router.back()}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Tornar
+                    {t('back')}
                 </Button>
               </div>
           </div>

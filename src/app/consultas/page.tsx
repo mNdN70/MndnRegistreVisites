@@ -11,8 +11,9 @@ import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
 import { useVisits } from "@/hooks/use-visits";
 import { useConfig } from "@/hooks/use-config";
+import { VisitsProvider } from "@/contexts/VisitsContext";
 
-export default function ConsultasPage() {
+function ConsultasPageContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const { exportActiveVisitsToCSV } = useVisits();
@@ -52,25 +53,25 @@ export default function ConsultasPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
-                <CardTitle className="font-headline text-4xl">Visites Actives</CardTitle>
+                <CardTitle className="font-headline text-4xl">{t('active_visits_title')}</CardTitle>
                 <CardDescription>
-                  Visitants que es troben actualment a les instal·lacions.
+                  {t('active_visits_description')}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Link href="/registros" passHref>
                   <Button>
                     <BookOpen />
-                    Consultar Registres
+                    {t('consult_records')}
                   </Button>
                 </Link>
                 <Button onClick={handleExport}>
                     <Download />
-                    Exportar a CSV
+                    {t('export_to_csv')}
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut />
-                    Sortir
+                    {t('logout')}
                 </Button>
               </div>
           </div>
@@ -81,4 +82,12 @@ export default function ConsultasPage() {
       </Card>
     </PageContainer>
   );
+}
+
+export default function ConsultasPage() {
+  return (
+    <VisitsProvider>
+      <ConsultasPageContent />
+    </VisitsProvider>
+  )
 }
