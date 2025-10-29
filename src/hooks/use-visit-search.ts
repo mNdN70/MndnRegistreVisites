@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BaseVisit } from '@/lib/types';
+import { errorEmitter } from '@/lib/error-emitter';
+import { FirestorePermissionError } from '@/lib/errors';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -37,7 +39,14 @@ export const useVisitSearch = (dni: string) => {
           where('id', '==', debouncedDni.toUpperCase())
         );
         
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: VISITS_COLLECTION,
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
 
         if (!querySnapshot.empty) {
           const visits = querySnapshot.docs.map(doc => doc.data() as BaseVisit);
@@ -48,7 +57,9 @@ export const useVisitSearch = (dni: string) => {
           setVisitData(null);
         }
       } catch (error) {
-        console.error('Error fetching last visit:', error);
+        if (!(error instanceof FirestorePermissionError)) {
+            console.error('Error fetching last visit:', error);
+        }
         setVisitData(null);
       } finally {
         setLoading(false);

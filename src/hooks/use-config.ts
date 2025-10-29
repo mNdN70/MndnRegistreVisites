@@ -18,6 +18,8 @@ import {
   updateDoc,
   getCountFromServer
 } from 'firebase/firestore';
+import { errorEmitter } from '@/lib/error-emitter';
+import { FirestorePermissionError } from '@/lib/errors';
 
 const DEPARTMENTS_COLLECTION = 'departments';
 const EMPLOYEES_COLLECTION = 'employees';
@@ -46,52 +48,70 @@ export const useConfig = () => {
   const { t } = useTranslation();
   
   const seedInitialData = useCallback(async () => {
-    const batch = writeBatch(db);
-    
-    const departmentsCountSnapshot = await getCountFromServer(collection(db, DEPARTMENTS_COLLECTION));
-    if(departmentsCountSnapshot.data().count === 0) {
-      const deptsToAdd = ['Recursos Humanos', 'Ventas', 'Marketing', 'Producción', 'IT'];
-      if(deptsToAdd.length > 0) {
-        deptsToAdd.forEach(dept => {
-          const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
-          batch.set(docRef, { name: dept });
-        });
+    try {
+      const batch = writeBatch(db);
+      
+      const departmentsCountSnapshot = await getCountFromServer(collection(db, DEPARTMENTS_COLLECTION));
+      if(departmentsCountSnapshot.data().count === 0) {
+        const deptsToAdd = ['Recursos Humanos', 'Ventas', 'Marketing', 'Producción', 'IT'];
+        if(deptsToAdd.length > 0) {
+          deptsToAdd.forEach(dept => {
+            const docRef = doc(db, DEPARTMENTS_COLLECTION, dept);
+            batch.set(docRef, { name: dept });
+          });
+        }
       }
-    }
 
-    const employeesCountSnapshot = await getCountFromServer(collection(db, EMPLOYEES_COLLECTION));
-    if(employeesCountSnapshot.data().count === 0) {
-        // No initial employees
-    }
-    
-    const usersCountSnapshot = await getCountFromServer(collection(db, USERS_COLLECTION));
-    if(usersCountSnapshot.data().count === 0) {
-      const userRef = doc(collection(db, USERS_COLLECTION));
-      batch.set(userRef, { username: 'admin', password: 'admin'});
-    }
+      const employeesCountSnapshot = await getCountFromServer(collection(db, EMPLOYEES_COLLECTION));
+      if(employeesCountSnapshot.data().count === 0) {
+          // No initial employees
+      }
+      
+      const usersCountSnapshot = await getCountFromServer(collection(db, USERS_COLLECTION));
+      if(usersCountSnapshot.data().count === 0) {
+        const userRef = doc(collection(db, USERS_COLLECTION));
+        batch.set(userRef, { username: 'admin', password: 'admin'});
+      }
 
-    await batch.commit();
+      await batch.commit().catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: '[batch]',
+            operation: 'create',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+    } catch(error) {
+       // Errors are already caught by individual getCountFromServer if they fail
+    }
   }, []);
 
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-      // await seedInitialData(); // This was causing the error on production
-
       const departmentsQuery = query(collection(db, DEPARTMENTS_COLLECTION), orderBy('name'));
       const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
       const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
 
-      const [departmentsSnapshot, employeesSnapshot, usersSnapshot] = await Promise.all([
-        getDocs(departmentsQuery),
-        getDocs(employeesQuery),
-        getDocs(usersQuery)
-      ]);
+      const departmentsSnapshot = await getDocs(departmentsQuery).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({ path: DEPARTMENTS_COLLECTION, operation: 'list' });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
+      const employeesSnapshot = await getDocs(employeesQuery).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({ path: EMPLOYEES_COLLECTION, operation: 'list' });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
+      const usersSnapshot = await getDocs(usersQuery).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({ path: USERS_COLLECTION, operation: 'list' });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
       
-      if (departmentsSnapshot.empty && employeesSnapshot.empty) {
+      if (departmentsSnapshot.empty && employeesSnapshot.empty && usersSnapshot.empty) {
         await seedInitialData();
         // Refetch after seeding
-        const [depts, emps, usrs] = await Promise.all([
+         const [depts, emps, usrs] = await Promise.all([
             getDocs(departmentsQuery),
             getDocs(employeesQuery),
             getDocs(usersQuery)
@@ -106,12 +126,14 @@ export const useConfig = () => {
       }
 
     } catch (error) {
-      console.error('Error fetching config from Firestore', error);
-      toast({
-        title: 'Error',
-        description: t('error_loading_config'),
-        variant: 'destructive',
-      });
+      if (!(error instanceof FirestorePermissionError)) {
+        console.error('Error fetching config from Firestore', error);
+        toast({
+            title: 'Error',
+            description: t('error_loading_config'),
+            variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -127,13 +149,21 @@ export const useConfig = () => {
         return;
     }
     
-    try {
-        await setDoc(doc(db, DEPARTMENTS_COLLECTION, department), { name: department });
-        setDepartments(prev => [...prev, department].sort());
-        toast({ title: t('department_added') });
-    } catch (error) {
-       toast({ title: 'Error', description: t('error_adding_department'), variant: 'destructive' });
-    }
+    const departmentData = { name: department };
+    setDoc(doc(db, DEPARTMENTS_COLLECTION, department), departmentData)
+        .then(() => {
+            setDepartments(prev => [...prev, department].sort());
+            toast({ title: t('department_added') });
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: `${DEPARTMENTS_COLLECTION}/${department}`,
+                operation: 'create',
+                requestResourceData: departmentData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({ title: 'Error', description: t('error_adding_department'), variant: 'destructive' });
+        });
   }, [departments, toast, t]);
 
   const removeDepartment = useCallback(async (departmentName: string) => {
@@ -150,15 +180,22 @@ export const useConfig = () => {
         batch.delete(doc.ref);
       });
   
-      await batch.commit();
+      batch.commit().catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: `[batch delete on department: ${departmentName}]`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ title: 'Error', description: t('error_deleting_department'), variant: 'destructive' });
+      }).then(() => {
+        setDepartments(prev => prev.filter(d => d !== departmentName));
+        setEmployees(prev => prev.filter(e => e.department !== departmentName));
+        toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+      });
   
-      setDepartments(prev => prev.filter(d => d !== departmentName));
-      setEmployees(prev => prev.filter(e => e.department !== departmentName));
-  
-      toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
     } catch (error) {
-      console.error("Error removing department:", error);
-      toast({ title: 'Error', description: t('error_deleting_department'), variant: 'destructive' });
+       console.error("Error removing department:", error);
+       toast({ title: 'Error', description: t('error_deleting_department'), variant: 'destructive' });
     }
   }, [toast, t]);
 
@@ -168,13 +205,21 @@ export const useConfig = () => {
       toast({ title: t('duplicated_employee'), variant: 'destructive' });
       return;
     }
-    try {
-      const newDocRef = await addDoc(collection(db, EMPLOYEES_COLLECTION), employee);
-      setEmployees(prev => [...prev, {id: newDocRef.id, ...employee}].sort((a,b) => a.name.localeCompare(b.name)));
-      toast({ title: t('employee_added') });
-    } catch (error) {
-       toast({ title: 'Error', description: t('error_adding_employee'), variant: 'destructive' });
-    }
+    
+    addDoc(collection(db, EMPLOYEES_COLLECTION), employee)
+      .then((newDocRef) => {
+        setEmployees(prev => [...prev, {id: newDocRef.id, ...employee}].sort((a,b) => a.name.localeCompare(b.name)));
+        toast({ title: t('employee_added') });
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: EMPLOYEES_COLLECTION,
+            operation: 'create',
+            requestResourceData: employee
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ title: 'Error', description: t('error_adding_employee'), variant: 'destructive' });
+      });
   }, [employees, toast, t]);
 
   const removeEmployee = useCallback(async (employeeName: string) => {
@@ -183,25 +228,39 @@ export const useConfig = () => {
         toast({ title: 'Error', description: t('employee_not_found'), variant: 'destructive' });
         return;
     }
-    try {
-      await deleteDoc(doc(db, EMPLOYEES_COLLECTION, employeeToRemove.id));
-      setEmployees(prev => prev.filter(e => e.name !== employeeName));
-      toast({ title: t('employee_deleted') });
-    } catch (error) {
-       toast({ title: 'Error', description: t('error_deleting_employee'), variant: 'destructive' });
-    }
+    
+    deleteDoc(doc(db, EMPLOYEES_COLLECTION, employeeToRemove.id))
+      .then(() => {
+        setEmployees(prev => prev.filter(e => e.name !== employeeName));
+        toast({ title: t('employee_deleted') });
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: `${EMPLOYEES_COLLECTION}/${employeeToRemove.id}`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ title: 'Error', description: t('error_deleting_employee'), variant: 'destructive' });
+      });
+
   }, [employees, toast, t]);
   
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
-    try {
-        const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
-        await updateDoc(employeeRef, employeeData);
+    const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
+    updateDoc(employeeRef, employeeData)
+      .then(() => {
         setEmployees(prev => prev.map(e => e.id === employeeId ? { id: employeeId, ...employeeData } : e).sort((a,b) => a.name.localeCompare(b.name)));
         toast({ title: 'Empleado actualizado' });
-    } catch (error) {
-        console.error("Error updating employee: ", error);
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: employeeRef.path,
+            operation: 'update',
+            requestResourceData: employeeData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
         toast({ title: 'Error', description: 'No se pudo actualizar el empleado.', variant: 'destructive' });
-    }
+      });
   }, [toast]);
 
 
@@ -210,13 +269,21 @@ export const useConfig = () => {
      toast({ title: t('duplicated_user'), variant: 'destructive' });
      return;
    }
-   try {
-     const newDocRef = await addDoc(collection(db, USERS_COLLECTION), user);
-     setUsers(prev => [...prev, {id: newDocRef.id, username: user.username }].sort((a,b) => a.username.localeCompare(b.username)));
-     toast({ title: t('user_added') });
-   } catch (error) {
-      toast({ title: 'Error', description: t('error_adding_user'), variant: 'destructive' });
-   }
+
+   addDoc(collection(db, USERS_COLLECTION), user)
+    .then((newDocRef) => {
+      setUsers(prev => [...prev, {id: newDocRef.id, username: user.username }].sort((a,b) => a.username.localeCompare(b.username)));
+      toast({ title: t('user_added') });
+    })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: USERS_COLLECTION,
+            operation: 'create',
+            requestResourceData: user
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ title: 'Error', description: t('error_adding_user'), variant: 'destructive' });
+    });
  }, [users, toast, t]);
 
  const removeUser = useCallback(async (userId: string) => {
@@ -224,13 +291,20 @@ export const useConfig = () => {
       toast({ title: t('cannot_delete_last_user'), variant: 'destructive' });
       return;
     }
-    try {
-     await deleteDoc(doc(db, USERS_COLLECTION, userId));
-     setUsers(prev => prev.filter(u => u.id !== userId));
-     toast({ title: t('user_deleted') });
-    } catch (error) {
-      toast({ title: 'Error', description: t('error_deleting_user'), variant: 'destructive' });
-    }
+
+    deleteDoc(doc(db, USERS_COLLECTION, userId))
+      .then(() => {
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        toast({ title: t('user_deleted') });
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: `${USERS_COLLECTION}/${userId}`,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ title: 'Error', description: t('error_deleting_user'), variant: 'destructive' });
+      });
  }, [users.length, toast, t]);
  
  const getReportRecipients = useCallback(() => {

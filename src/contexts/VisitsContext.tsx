@@ -18,6 +18,8 @@ import {
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { errorEmitter } from '@/lib/error-emitter';
+import { FirestorePermissionError } from '@/lib/errors';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -50,7 +52,14 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const q = query(collection(db, VISITS_COLLECTION), orderBy('entryTime', 'desc'));
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(q).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: VISITS_COLLECTION,
+          operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
       const visitsData = querySnapshot.docs.map(doc => ({
         ...doc.data(),
         docId: doc.id,
@@ -83,17 +92,25 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (changesMade) {
-        await batch.commit();
+        await batch.commit().catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: VISITS_COLLECTION,
+                operation: 'update'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
       }
 
       setVisits(updatedVisitsData);
     } catch (error) {
-      console.error('Error reading from Firestore', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los registros de visitas.',
-        variant: 'destructive',
-      });
+      if (!(error instanceof FirestorePermissionError)) {
+        console.error('Error reading from Firestore', error);
+        toast({
+            title: 'Error',
+            description: 'No se pudieron cargar los registros de visitas.',
+            variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -103,14 +120,21 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     fetchVisits();
   }, [fetchVisits]);
 
-  const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
+    const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     try {
         const activeVisitQuery = query(
             collection(db, VISITS_COLLECTION),
             where('id', '==', visit.id.toUpperCase()),
             where('exitTime', '==', null)
         );
-        const activeVisitSnapshot = await getDocs(activeVisitQuery);
+        const activeVisitSnapshot = await getDocs(activeVisitQuery).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: VISITS_COLLECTION,
+                operation: 'list'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
 
         if (!activeVisitSnapshot.empty) {
             const errorMessage = t('duplicate_entry_detail');
@@ -153,8 +177,16 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
         };
       }
       
-      const docRef = await addDoc(collection(db, VISITS_COLLECTION), newVisit);
-      setVisits(prev => [{ docId: docRef.id, ...newVisit }, ...prev]);
+      addDoc(collection(db, VISITS_COLLECTION), newVisit).then((docRef) => {
+        setVisits(prev => [{ docId: docRef.id, ...newVisit }, ...prev]);
+      }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: VISITS_COLLECTION,
+            operation: 'create',
+            requestResourceData: newVisit,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
 
       toast({
         title: t('entry_registered'),
@@ -162,8 +194,10 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       });
       return { success: true };
     } catch (error) {
-       console.error("Error adding visit:", error);
-       toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
+       if (!(error instanceof FirestorePermissionError)) {
+         console.error("Error adding visit:", error);
+         toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
+       }
        return { success: false, message: 'No se pudo registrar la entrada.' };
     }
   };
@@ -176,7 +210,14 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     );
     
     try {
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(q).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: VISITS_COLLECTION,
+            operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
       
       if (querySnapshot.empty) {
         const errorMessage = t('no_active_visit_today');
@@ -193,8 +234,17 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const latestVisitDoc = visits[0];
 
       const exitTime = new Date().toISOString();
-      await updateDoc(doc(db, VISITS_COLLECTION, latestVisitDoc.docId), {
+      const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.docId);
+
+      updateDoc(visitDocRef, {
         exitTime: exitTime,
+      }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: visitDocRef.path,
+            operation: 'update',
+            requestResourceData: { exitTime: exitTime },
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
       
       setVisits(prevVisits => prevVisits.map(v => v.docId === latestVisitDoc.docId ? {...v, exitTime: exitTime} : v))
@@ -205,8 +255,10 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       });
       return { success: true };
     } catch(error) {
-      console.error("Error registering exit:", error);
-      toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
+      if (!(error instanceof FirestorePermissionError)) {
+        console.error("Error registering exit:", error);
+        toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
+      }
       return { success: false, message: 'No se pudo registrar la salida.'};
     }
   };
