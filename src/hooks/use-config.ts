@@ -50,37 +50,18 @@ export const useConfig = () => {
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-      // Departments and Employees are now loaded from constants.ts
+      // Departments and Employees are now loaded from constants.ts to avoid permission issues.
       setDepartments(INITIAL_DEPARTMENTS.sort());
+      setEmployees(INITIAL_EMPLOYEES.sort((a, b) => a.name.localeCompare(b.name)));
       
-      // We still fetch employees and users from firebase for the config panel,
-      // but the initial state is populated from constants so the forms work.
-      const employeesQuery = query(collection(db, EMPLOYEES_COLLECTION), orderBy('name'));
+      // We only fetch users from firebase for the config panel.
       const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
-
-      const employeesSnapshot = await getDocs(employeesQuery).catch(async (serverError) => {
-        // Non-critical, forms will work with initial data. Maybe show a toast.
-        console.error("Could not fetch employees for config panel:", serverError.message);
-        return null;
-      });
 
       const usersSnapshot = await getDocs(usersQuery).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({ path: USERS_COLLECTION, operation: 'list' });
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
       });
-      
-      if (employeesSnapshot) {
-         const dbEmployees = employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee));
-         // Combine initial employees with DB employees, avoiding duplicates
-         const allEmployees = [...INITIAL_EMPLOYEES];
-         dbEmployees.forEach(dbEmp => {
-           if (!allEmployees.some(emp => emp.name.toLowerCase() === dbEmp.name.toLowerCase())) {
-             allEmployees.push(dbEmp);
-           }
-         });
-         setEmployees(allEmployees.sort((a,b) => a.name.localeCompare(b.name)));
-      }
       
       setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
 
@@ -184,7 +165,27 @@ export const useConfig = () => {
   const removeEmployee = useCallback(async (employeeName: string) => {
     const employeeToRemove = employees.find(e => e.name === employeeName);
     if (!employeeToRemove || !employeeToRemove.id) {
-        toast({ title: 'Error', description: t('employee_not_found'), variant: 'destructive' });
+        // Try finding from Firestore if not in local state
+        const q = query(collection(db, EMPLOYEES_COLLECTION), where("name", "==", employeeName));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            toast({ title: 'Error', description: t('employee_not_found'), variant: 'destructive' });
+            return;
+        }
+        const docToDelete = snapshot.docs[0];
+         deleteDoc(doc(db, EMPLOYEES_COLLECTION, docToDelete.id))
+          .then(() => {
+            setEmployees(prev => prev.filter(e => e.name !== employeeName));
+            toast({ title: t('employee_deleted') });
+          })
+          .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: `${EMPLOYEES_COLLECTION}/${docToDelete.id}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({ title: 'Error', description: t('error_deleting_employee'), variant: 'destructive' });
+          });
         return;
     }
     
