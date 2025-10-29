@@ -11,7 +11,7 @@ export default function FormsLayout({
 }) {
     return (
         <ConfigProvider>
-            <VisitsProvider>{children}</VisisProvider>
+            <VisitsProvider>{children}</VisitsProvider>
         </ConfigProvider>
     );
 }

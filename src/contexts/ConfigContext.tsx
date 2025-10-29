@@ -109,7 +109,9 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, t]);
 
   useEffect(() => {
-    fetchConfig();
+    // We will no longer fetch all config on initial load to prevent permission errors on Netlify.
+    // Data will be loaded on demand in the config panel.
+    setLoading(false);
   }, [fetchConfig]);
 
   const addDepartment = useCallback(async (department: string) => {
