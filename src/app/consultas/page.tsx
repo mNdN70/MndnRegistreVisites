@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
 import { useVisits } from "@/hooks/use-visits";
-import { useConfig } from "@/hooks/use-config";
 import { VisitsProvider } from "@/contexts/VisitsContext";
+import { useConfig } from "@/hooks/use-config";
 
 function ConsultasPageContent() {
   const { t } = useTranslation();

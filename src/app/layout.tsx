@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
 import { LanguageProvider } from '@/hooks/use-translation';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { ConfigProvider } from '@/contexts/ConfigContext';
 
 export const metadata: Metadata = {
   title: 'MENADIONA',
@@ -21,12 +22,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen bg-background flex flex-col">
         <LanguageProvider>
+          <ConfigProvider>
             <FirebaseErrorListener />
             <Header />
             <main className="flex-grow">
             {children}
             </main>
             <Toaster />
+          </ConfigProvider>
         </LanguageProvider>
       </body>
     </html>
