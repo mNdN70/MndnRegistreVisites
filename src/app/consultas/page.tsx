@@ -85,9 +85,10 @@ function ConsultasPageContent() {
 }
 
 export default function ConsultasPage() {
+  // Wrap with VisitsProvider to ensure useVisits and useConfig hooks have context
   return (
     <VisitsProvider>
-      <ConsultasPageContent />
+        <ConsultasPageContent />
     </VisitsProvider>
-  )
+  );
 }
