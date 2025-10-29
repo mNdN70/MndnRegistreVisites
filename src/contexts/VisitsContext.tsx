@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AnyVisit, TransporterVisit } from '@/lib/types';
@@ -118,10 +119,9 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
    useEffect(() => {
-    // We no longer fetch all visits on initial load to prevent permission errors.
-    // Data will be loaded on demand (e.g., when viewing records).
-    setLoading(false);
-  }, []);
+    // Data will be loaded on demand (e.g., when viewing records or active visits).
+    fetchVisits();
+  }, [fetchVisits]);
 
     const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>) => {
     try {
@@ -361,3 +361,5 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
+
+    
