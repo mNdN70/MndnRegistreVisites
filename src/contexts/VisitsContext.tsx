@@ -118,36 +118,22 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast]);
 
-  // Load visits on demand from pages that need it.
-  // useEffect(() => {
-  //   fetchVisits();
-  // }, [fetchVisits]);
-
-    const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
+  const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {
-        const activeVisitQuery = query(
-            collection(db, VISITS_COLLECTION),
-            where('id', '==', visit.id.toUpperCase()),
-            where('exitTime', '==', null)
-        );
-        const activeVisitSnapshot = await getDocs(activeVisitQuery).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: VISITS_COLLECTION,
-                operation: 'list'
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw permissionError;
-        });
+      // Check for active visit in memory instead of querying Firestore
+      const activeVisit = visits.find(
+        (v) => v.id.toUpperCase() === visit.id.toUpperCase() && v.exitTime === null
+      );
 
-        if (!activeVisitSnapshot.empty) {
-            const errorMessage = t('duplicate_entry_detail');
-            toast({
-                title: t('duplicate_entry'),
-                description: errorMessage,
-                variant: 'destructive',
-            });
-            return { success: false, message: errorMessage };
-        }
+      if (activeVisit) {
+        const errorMessage = t('duplicate_entry_detail');
+        toast({
+          title: t('duplicate_entry'),
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return { success: false, message: errorMessage };
+      }
       
       const baseVisitData = {
         id: visit.id.toUpperCase(),
@@ -361,6 +347,3 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
-
-    
-    
