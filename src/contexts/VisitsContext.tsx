@@ -19,8 +19,8 @@ import {
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
-import { errorEmitter } from '@/lib/error-emitter';
-import { FirestorePermissionError } from '@/lib/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const VISITS_COLLECTION = 'visits';
 
@@ -52,10 +52,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const db = useFirestore();
 
   const fetchVisits = useCallback(async () => {
-    // Only set loading to true if there are no visits loaded yet
-    if(visits.length === 0) {
-      setLoading(true);
-    }
+    setLoading(true);
     try {
       const q = query(collection(db, VISITS_COLLECTION), orderBy('entryTime', 'desc'));
       const querySnapshot = await getDocs(q).catch(async (serverError) => {
@@ -84,7 +81,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [toast, db, visits.length]);
+  }, [toast, db]);
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {
@@ -316,5 +313,3 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
-
-    
