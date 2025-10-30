@@ -1,58 +1,61 @@
 /**
- * @fileoverview Firestore Security Rules for the visit logging application.
+ * @fileOverview Firestore Security Rules for the visit logging application.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and security, focusing on clear ownership and controlled access to visit records.  It avoids overly complex rules and relies on denormalization to optimize performance and security.
+ * This ruleset prioritizes secure data access based on user authentication. It enforces
+ * granular control over read and write operations on the `persons_to_visit` and `visits` collections.
+ * The primary focus is on ensuring that only authenticated users can create, modify, or delete visit records.
  *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited. Publicly readable.
- * - /visits/{visitId}: Stores visit records. Publicly readable but write-protected, with owner-only (creator) access for updates and deletes.
+ * The data is organized into two main collections:
+ * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
+ * - /visits/{visitId}: Stores visit records with details about each visit.
  *
  * Key Security Decisions:
- * - Public read access for both collections to simplify data retrieval.
- * - Strict ownership enforced for modifications to visit records.  Only the user who created a visit record can modify or delete it.
- * - No user listing is allowed on any collection.
+ * - Read access to both collections is open to all users, including unauthenticated users.
+ * - Create, update, and delete operations on both collections are allowed for authenticated users.
+ * - No specific role-based access control is implemented in this prototype; all authenticated users
+ *   are treated equally.
+ * - Data validation is minimal, focusing on authorization and relational integrity rather than
+ *   strict schema enforcement.
  *
  * Denormalization for Authorization:
- * - The `Visit` entity should include an `ownerId` field (or similar) to represent who created the visit. This avoids the need to query other collections to determine ownership.  However, the schema doesn't define one.  A `TODO` rule is created.
+ *  - Not applicable in this prototype because there are no specific authorization requirements based on roles.
  *
  * Structural Segregation:
- * - No structural segregation is needed as all data is either publicly readable or secured by ownership.
+ *  - Not applicable in this prototype. There is no need to distinguish between private and public data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows read-only access to person to visit information.
+     * @description Rules for the `persons_to_visit` collection. Allows any authenticated user to create, read, update, and delete person to visit records.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Any user can read person to visit data.
-     * @deny (create, update, delete) No user can create, update, or delete person to visit data.
-     * @principle Allows any user to read, but no one can write.
+     * @allow (get, list) Allow any user to read data.
+     * @allow (create, update, delete) Allow any authenticated user to modify data.
+     * @deny (create, update, delete) Deny unauthenticated users from modifying data.
+     * @principle Allows any authenticated user to manage person to visit records.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Controls access to visit records. Allows public read access, but restricts writes to owner only.
+     * @description Rules for the `visits` collection. Allows any authenticated user to create, read, update, and delete visit records.
      * @path /visits/{visitId}
-     * @allow (get, list) Any user can read visit records.
-     * @deny (create, update, delete) Only the owner of a visit record can modify or delete it.
-     * @principle Enforces owner-only writes for visit records.
+     * @allow (get, list) Allow any user to read data.
+     * @allow (create, update, delete) Allow any authenticated user to modify data.
+     * @deny (create, update, delete) Deny unauthenticated users from modifying data.
+     * @principle Allows any authenticated user to manage visit records.
      */
     match /visits/{visitId} {
-      allow get: if true;
-      allow list: if true;
-      // CRITICAL: Cannot implement owner-only writes. The 'Visit' entity is missing an 'ownerId' or 'authorId' field.
-      allow create: if isSignedIn(); // Allow create if signed in.  Owner will need to be set via client SDK.
-      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
+    // Helper function to check if the user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
