@@ -14,13 +14,10 @@ export function FirebaseErrorListener() {
       
       toast({
         variant: "destructive",
-        title: "Error de permisos de Firestore",
-        description: "No tienes permiso para realizar esta acción.",
+        title: "Error de permisos",
+        description: "No tienes permiso para realizar esta acción. Contacta con el administrador.",
         duration: 9000,
       });
-
-      // In a real app, you might want to throw this error to an error boundary
-      // For this prototype, we'll just log it and show a toast.
     };
 
     errorEmitter.on("permission-error", handlePermissionError);
@@ -32,3 +29,5 @@ export function FirebaseErrorListener() {
 
   return null;
 }
+
+    

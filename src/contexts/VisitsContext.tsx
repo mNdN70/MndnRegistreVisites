@@ -67,43 +67,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
         docId: doc.id,
       })) as AnyVisit[];
 
-      const now = new Date();
-      const batch = writeBatch(db);
-      let changesMade = false;
-
-      const updatedVisitsData = visitsData.map(visit => {
-        if (visit.exitTime === null) {
-            const entryTime = new Date(visit.entryTime);
-            const hoursDiff = (now.getTime() - entryTime.getTime()) / (1000 * 60 * 60);
-            if (hoursDiff > 10) {
-                const exitTime = new Date(entryTime.getTime() + 10 * 60 * 60 * 1000);
-                const visitDocRef = doc(db, VISITS_COLLECTION, visit.docId!);
-                batch.update(visitDocRef, {
-                    exitTime: exitTime.toISOString(),
-                    autoExit: true,
-                });
-                changesMade = true;
-                return {
-                    ...visit,
-                    exitTime: exitTime.toISOString(),
-                    autoExit: true,
-                };
-            }
-        }
-        return visit;
-      });
-
-      if (changesMade) {
-        await batch.commit().catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: VISITS_COLLECTION,
-                operation: 'update'
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
-      }
-
-      setVisits(updatedVisitsData);
+      setVisits(visitsData);
     } catch (error) {
       if (!(error instanceof FirestorePermissionError)) {
         console.error('Error reading from Firestore', error);
@@ -120,9 +84,9 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {
-      // Check for active visit in memory instead of querying Firestore
+      const upperCaseId = visit.id.toUpperCase();
       const activeVisit = visits.find(
-        (v) => v.id.toUpperCase() === visit.id.toUpperCase() && v.exitTime === null
+        (v) => v.id.toUpperCase() === upperCaseId && v.exitTime === null
       );
 
       if (activeVisit) {
@@ -136,7 +100,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const baseVisitData = {
-        id: visit.id.toUpperCase(),
+        id: upperCaseId,
         name: visit.name,
         company: visit.company,
         reason: visit.reason,
@@ -192,10 +156,11 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const registerExit = async (dni: string) => {
+  const registerExit = async (dni: string): Promise<{ success: boolean; message?: string }> => {
+    const upperCaseDni = dni.toUpperCase();
     const q = query(
       collection(db, VISITS_COLLECTION),
-      where('id', '==', dni.toUpperCase()),
+      where('id', '==', upperCaseDni),
       where('exitTime', '==', null)
     );
     
@@ -203,7 +168,8 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const querySnapshot = await getDocs(q).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: VISITS_COLLECTION,
-            operation: 'list'
+            operation: 'list',
+            requestResourceData: { where: `id == ${upperCaseDni} and exitTime == null`}
         });
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
@@ -219,20 +185,19 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, message: errorMessage };
       }
 
-      const visits = querySnapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
-      visits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
-      const latestVisitDoc = visits[0];
+      const activeVisits = querySnapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
+      activeVisits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+      const latestVisitDoc = activeVisits[0];
 
       const exitTime = new Date().toISOString();
       const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.docId);
+      const updateData = { exitTime: exitTime };
 
-      await updateDoc(visitDocRef, {
-        exitTime: exitTime,
-      }).catch(async (serverError) => {
+      await updateDoc(visitDocRef, updateData).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: visitDocRef.path,
             operation: 'update',
-            requestResourceData: { exitTime: exitTime },
+            requestResourceData: updateData,
         });
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
@@ -347,3 +312,5 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
+
+    

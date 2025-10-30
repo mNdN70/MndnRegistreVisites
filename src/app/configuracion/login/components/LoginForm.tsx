@@ -54,6 +54,7 @@ export default function LoginForm() {
         const permissionError = new FirestorePermissionError({
           path: 'users',
           operation: 'list',
+          requestResourceData: { where: `username == ${values.username}` }
         });
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
@@ -127,3 +128,5 @@ export default function LoginForm() {
     </Form>
   );
 }
+
+    

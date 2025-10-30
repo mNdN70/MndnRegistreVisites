@@ -25,12 +25,10 @@ export default function ConfigPage() {
   }, [router, fetchConfig]);
 
   if (isAuthorized === null) {
-    // Render a loader or nothing while checking auth.
     return null;
   }
   
   if (!isAuthorized) {
-    // This part will likely not be seen as the user is redirected, but it's good practice.
     return null;
   }
   
@@ -50,3 +48,5 @@ export default function ConfigPage() {
     </PageContainer>
   );
 }
+
+    
