@@ -5,24 +5,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import ConfigPanel from "./components/ConfigPanel";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useConfig } from "@/hooks/use-config";
 
 export default function ConfigPage() {
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const { fetchConfig } = useConfig();
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const storedToken = sessionStorage.getItem('auth_token');
         if (storedToken === 'true') {
             setIsAuthorized(true);
+            fetchConfig();
         } else {
             router.push('/configuracion/login?redirectTo=/configuracion/panel');
         }
     }
-  }, [router]);
+  }, [router, fetchConfig]);
 
+  if (isAuthorized === null) {
+    // Render a loader or nothing while checking auth.
+    return null;
+  }
+  
   if (!isAuthorized) {
-    // Render nothing or a loader while we check auth and redirect.
+    // This part will likely not be seen as the user is redirected, but it's good practice.
     return null;
   }
   
