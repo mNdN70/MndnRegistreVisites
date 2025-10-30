@@ -1,66 +1,59 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces authentication-based access control for a visit logging application.
- *
- * Core Philosophy:
- *   The ruleset prioritizes security by requiring authentication for all data modifications.
- *   It allows open read access to visit and person data while restricting write access to authenticated users.
- *
- * Data Structure:
- *   The database consists of two main collections: `persons_to_visit` and `visits`.
- *   - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
- *   - `/visits/{visitId}`: Stores records of visits.
- *
- * Key Security Decisions:
- *   - Authenticated users can create, update and delete visits and persons_to_visit.
- *   - The rules do not enforce strict data validation, allowing for flexible data schemas during prototyping.
- *   - No user listing is explicitly denied, assuming it's not a critical security concern in this prototype.
+ * @file Firebase Security Rules for Visit Management App
+ * @core Philosophy: This ruleset implements a hybrid security model. Data in the 'visits' and 'persons_to_visit' collections is generally open for reading. However, writes (create, update, delete) are strictly controlled to ensure data integrity and prevent unauthorized modifications. The 'departments' collection does not exist within our application structure and thus has no write access.
+ * @data Structure:
+ *   - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
+ *   - /visits/{visitId}: Stores visit records.
+ * @key Security Decisions:
+ *   - Read access is generally public, but write access is restricted.
+ *   - There are no user-specific subcollections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants authenticated users create, read, update, and delete access to the persons_to_visit collection.
-     * @path /persons_to_visit/{personToVisitId}
-     * @allow (create) request.auth != null
-     * @allow (get) true
-     * @allow (update) request.auth != null
-     * @allow (delete) request.auth != null
-     * @deny (create) request.auth == null
-     * @deny (update) request.auth == null
-     * @deny (delete) request.auth == null
-     * @principle Authenticated users can manage people to visit
+     * @description Grants read access to all, but denies all write operations, to the 'departments' collection.
+     * @path /departments/{departmentId}
+     * @allow get, list: Everyone can read the data.
+     * @deny create, update, delete: Nobody can write to this collection.
+     * @principle Collection does not exist in application structure.
      */
-    match /persons_to_visit/{personToVisitId} {
+    match /departments/{departmentId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.id == personToVisitId;
-      allow delete: if isSignedIn() && resource.data.id == personToVisitId && resource != null;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Grants authenticated users create, read, update, and delete access to the visits collection.
+     * @description Grants read access to all, but restricts write access to ensure data integrity for the 'persons_to_visit' collection.
+     * @path /persons_to_visit/{personToVisitId}
+     * @allow get, list: Everyone can read the data.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Restricts write access to ensure data integrity
+     */
+    match /persons_to_visit/{personToVisitId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Grants read access to all, but restricts write access to ensure data integrity for the 'visits' collection.
      * @path /visits/{visitId}
-     * @allow (create) request.auth != null
-     * @allow (get) true
-     * @allow (update) request.auth != null
-     * @allow (delete) request.auth != null
-     * @deny (create) request.auth == null
-     * @deny (update) request.auth == null
-     * @deny (delete) request.auth == null
-     * @principle Authenticated users can manage visits.
+     * @allow get, list: Everyone can read the data.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Restricts write access to ensure data integrity
      */
     match /visits/{visitId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.id == visitId && resource != null;
-      allow delete: if isSignedIn() && resource.data.id == visitId && resource != null;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
-
-    function isSignedIn() {
-        return request.auth != null;
-    }
-
   }
 }
