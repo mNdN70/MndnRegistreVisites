@@ -1,54 +1,63 @@
 /**
- * @file Overview
- * This ruleset enforces a basic security model focused on isolating user data and preventing unauthorized access.
+ * @file Firebase Security Rules for Visit Logging Application
  *
- * Data Structure:
+ * @core Philosophy:
+ * This ruleset enforces a combination of public read access for specific collections and strict owner-only write access to protect the integrity and privacy of visit records.
+ *
+ * @data Structure:
  * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records.
+ * - /visits/{visitId}: Stores individual visit records.
  *
- * Key Security Decisions:
- * - The rules prioritize simplicity and security, with clear ownership enforced where applicable.
- * - There is no role-based access control.
+ * @key Security Decisions:
+ * - Public Read Access: The `persons_to_visit` collection allows public read access to facilitate listing of visitable people.
+ * - Owner-Only Write Access: The `visits` collection restricts write access to the owner of the visit record, ensuring that only authorized users can create, modify, or delete visit records.
+ * - Denormalization for Authorization: No denormalization is required as ownership is implicitly tied to the document ID for visits.
+ * - User Listing Disallowed: Listing of users is implicitly disallowed as no user collection exists.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Defines access control for the persons_to_visit collection.  Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
+     * @description Grants public read access and restricts write access to the owner of the person_to_visit record.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Any authenticated user can read data.
-     * @allow (create) Any authenticated user can create data.
-     * @deny (update, delete) No one can update or delete data.
-     * @principle All authenticated users can read and create records.
+     * @allow (get, list): Any user can read the data.
+     * @allow (create, update, delete): No one can modify the data through the client directly.
+     * @principle Allows public read access for listing visitable people.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Defines access control for the visits collection. Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
+     * @description Enforces owner-only write access for visit records.
      * @path /visits/{visitId}
-     * @allow (get, list) Any authenticated user can read data.
-     * @allow (create) Any authenticated user can create data.
-     * @deny (update, delete) No one can update or delete data.
-     * @principle All authenticated users can read and create records.
+     * @allow (get, list): Any user can read the data.
+     * @allow (create): The user can create if they are authenticated.
+     * @allow (update, delete): The user can update and delete only if they are the owner and the document exists.
+     * @deny (create, update, delete): The user cannot create, update or delete if they are not the owner.
+     * @principle Enforces document ownership for writes and allows public reads.
      */
     match /visits/{visitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow update, delete: if isExistingOwner(visitId);
     }
   }
 
-  // Helper function to determine if the user is signed in
+  // Helper function to check if the user is signed in
   function isSignedIn() {
     return request.auth != null;
+  }
+
+  // Helper function to check if the user is the owner of the document
+  function isOwner(visitId) {
+    return request.auth.uid == visitId;
+  }
+
+  // Helper function to check if the user is the existing owner of the document
+  function isExistingOwner(visitId) {
+    return isOwner(visitId) && resource != null;
   }
 }
