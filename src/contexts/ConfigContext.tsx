@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, createContext, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFirestore } from '@/firebase';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs, setDoc, query, where } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -55,16 +56,22 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         const depts = snapshot.docs.map(doc => doc.id).sort();
         setDepartments(depts);
     }, (error) => {
-        console.error("Error fetching departments:", error);
-        toast({ title: t('error_loading_config'), variant: "destructive" });
+        const permissionError = new FirestorePermissionError({
+            path: DEPARTMENTS_COLLECTION,
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
     const unsubscribeEmployees = onSnapshot(employeesCollection, (snapshot) => {
         const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Employee));
         setEmployees(sortEmployees(emps));
     }, (error) => {
-        console.error("Error fetching employees:", error);
-        toast({ title: t('error_loading_config'), variant: "destructive" });
+        const permissionError = new FirestorePermissionError({
+            path: EMPLOYEES_COLLECTION,
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
     setLoading(false);
@@ -86,7 +93,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     }
     const departmentData = { name: department };
     const docRef = doc(db, DEPARTMENTS_COLLECTION, department);
-    await addDoc(collection(db, DEPARTMENTS_COLLECTION), departmentData)
+    setDoc(docRef, departmentData)
         .then(() => {
             toast({ title: t('department_added') });
         })
@@ -97,27 +104,27 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
                 requestResourceData: departmentData,
             });
             errorEmitter.emit('permission-error', permissionError);
-            toast({ title: t('error_adding_department'), variant: 'destructive' });
         });
   }, [db, departments, toast, t]);
 
   const removeDepartment = useCallback(async (departmentName: string) => {
-     try {
-      await deleteDoc(doc(db, DEPARTMENTS_COLLECTION, departmentName));
-
-      // Also remove employees in that department
-      const q = collection(db, EMPLOYEES_COLLECTION);
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach(async (docSnapshot) => {
-        if (docSnapshot.data().department === departmentName) {
-          await deleteDoc(doc(db, EMPLOYEES_COLLECTION, docSnapshot.id));
-        }
-      });
-      toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
-    } catch (error) {
-      console.error("Error removing department: ", error);
-      toast({ title: t('error_deleting_department'), variant: 'destructive' });
-    }
+    const docRef = doc(db, DEPARTMENTS_COLLECTION, departmentName);
+    deleteDoc(docRef)
+        .then(async () => {
+            const q = query(collection(db, EMPLOYEES_COLLECTION), where("department", "==", departmentName));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (docSnapshot) => {
+                await deleteDoc(doc(db, EMPLOYEES_COLLECTION, docSnapshot.id));
+            });
+            toast({ title: t('department_deleted'), description: t('department_deleted_detail') });
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'delete'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   }, [db, toast, t]);
 
   const addEmployee = useCallback(async (employee: Omit<Employee, 'id'>) => {
@@ -125,33 +132,40 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: t('duplicated_employee'), variant: 'destructive' });
       return;
     }
-    await addDoc(collection(db, EMPLOYEES_COLLECTION), employee)
+    const employeeData = { ...employee, id: uuidv4() };
+    const docRef = doc(db, EMPLOYEES_COLLECTION, employeeData.id);
+    setDoc(docRef, employeeData)
         .then(() => {
             toast({ title: t('employee_added') });
         })
         .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: EMPLOYEES_COLLECTION,
-            operation: 'create',
-            requestResourceData: employee
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        toast({ title: t('error_adding_employee'), variant: 'destructive' });
+            const permissionError = new FirestorePermissionError({
+                path: EMPLOYEES_COLLECTION,
+                operation: 'create',
+                requestResourceData: employee
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
   }, [db, employees, toast, t]);
 
   const removeEmployee = useCallback(async (employeeId: string) => {
-    try {
-        await deleteDoc(doc(db, EMPLOYEES_COLLECTION, employeeId));
-        toast({ title: t('employee_deleted') });
-    } catch(e) {
-       toast({ title: 'Error', description: t('error_deleting_employee'), variant: 'destructive' });
-    }
+    const docRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
+    deleteDoc(docRef)
+        .then(() => {
+            toast({ title: t('employee_deleted') });
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'delete'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   }, [db, toast, t]);
   
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
     const employeeDoc = doc(db, EMPLOYEES_COLLECTION, employeeId);
-    await updateDoc(employeeDoc, employeeData)
+    updateDoc(employeeDoc, employeeData)
         .then(() => {
             toast({ title: 'Empleado actualizado' });
         })
@@ -162,7 +176,6 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
                 requestResourceData: employeeData
             });
             errorEmitter.emit('permission-error', permissionError);
-            toast({ title: 'Error al actualizar', variant: 'destructive' });
         });
   }, [db, toast]);
  
@@ -178,3 +191,5 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     </ConfigContext.Provider>
   );
 };
+
+    
