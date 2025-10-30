@@ -5,24 +5,11 @@ import { AnyVisit, TransporterVisit } from '@/lib/types';
 import { useState, useEffect, useCallback, createContext, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
-import { useFirestore } from '@/firebase';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  updateDoc,
-  doc,
-  writeBatch
-} from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { v4 as uuidv4 } from 'uuid';
 
-const VISITS_COLLECTION = 'visits';
+const VISITS_STORAGE_KEY = 'menadiona-visits';
 
 interface VisitsContextType {
     visits: AnyVisit[];
@@ -49,175 +36,118 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     from: startOfDay(new Date()),
     to: endOfDay(new Date())
   });
-  const db = useFirestore();
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
-    try {
-      const q = query(collection(db, VISITS_COLLECTION), orderBy('entryTime', 'desc'));
-      const querySnapshot = await getDocs(q).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: VISITS_COLLECTION,
-          operation: 'list'
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-      const visitsData = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        docId: doc.id,
-      })) as AnyVisit[];
-
-      setVisits(visitsData);
-    } catch (error) {
-      if (!(error instanceof FirestorePermissionError)) {
-        console.error('Error reading from Firestore', error);
-        toast({
-            title: 'Error',
-            description: 'No se pudieron cargar los registros de visitas.',
-            variant: 'destructive',
-        });
+    if (typeof window !== 'undefined') {
+      const storedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
+      if (storedVisits) {
+        setVisits(JSON.parse(storedVisits));
       }
-    } finally {
-      setLoading(false);
     }
-  }, [toast, db]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
+
+  const saveVisits = (updatedVisits: AnyVisit[]) => {
+    setVisits(updatedVisits);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(VISITS_STORAGE_KEY, JSON.stringify(updatedVisits));
+    }
+  };
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
-    try {
-      const upperCaseId = visit.id.toUpperCase();
-      const activeVisit = visits.find(
-        (v) => v.id.toUpperCase() === upperCaseId && v.exitTime === null
-      );
+    const upperCaseId = visit.id.toUpperCase();
+    const activeVisit = visits.find(
+      (v) => v.id.toUpperCase() === upperCaseId && v.exitTime === null
+    );
 
-      if (activeVisit) {
-        const errorMessage = t('duplicate_entry_detail');
-        toast({
-          title: t('duplicate_entry'),
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        return { success: false, message: errorMessage };
-      }
-      
-      const baseVisitData = {
-        id: upperCaseId,
-        name: visit.name,
-        company: visit.company,
-        reason: visit.reason,
-        personToVisit: visit.personToVisit,
-        department: visit.department,
-        privacyPolicyAccepted: visit.privacyPolicyAccepted,
-        entryTime: new Date().toISOString(),
-        exitTime: null,
-        autoExit: false,
-      };
-
-      let newVisit: Omit<AnyVisit, 'docId'>;
-
-      if (visit.type === 'transporter') {
-        const transporterVisit = visit as Omit<TransporterVisit, 'entryTime' | 'exitTime' | 'docId'>;
-        newVisit = {
-          ...baseVisitData,
-          haulierCompany: transporterVisit.haulierCompany,
-          licensePlate: transporterVisit.licensePlate.toUpperCase(),
-          trailerLicensePlate: transporterVisit.trailerLicensePlate?.toUpperCase(),
-          type: 'transporter',
-        };
-      } else {
-        newVisit = {
-          ...baseVisitData,
-          type: 'general',
-        };
-      }
-      
-      const docRef = await addDoc(collection(db, VISITS_COLLECTION), newVisit).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: VISITS_COLLECTION,
-            operation: 'create',
-            requestResourceData: newVisit,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-
-      setVisits(prev => [{ docId: docRef.id, ...newVisit } as AnyVisit, ...prev]);
-
+    if (activeVisit) {
+      const errorMessage = t('duplicate_entry_detail');
       toast({
-        title: t('entry_registered'),
-        description: t('entry_registered_detail').replace('{name}', visit.name),
+        title: t('duplicate_entry'),
+        description: errorMessage,
+        variant: 'destructive',
       });
-      return { success: true };
-    } catch (error) {
-       if (!(error instanceof FirestorePermissionError)) {
-         console.error("Error adding visit:", error);
-         toast({ title: 'Error', description: 'No se pudo registrar la entrada.', variant: 'destructive' });
-       }
-       return { success: false, message: 'No se pudo registrar la entrada.' };
+      return { success: false, message: errorMessage };
     }
+    
+    const baseVisitData = {
+      docId: uuidv4(),
+      id: upperCaseId,
+      name: visit.name,
+      company: visit.company,
+      reason: visit.reason,
+      personToVisit: visit.personToVisit,
+      department: visit.department,
+      privacyPolicyAccepted: visit.privacyPolicyAccepted,
+      entryTime: new Date().toISOString(),
+      exitTime: null,
+      autoExit: false,
+    };
+
+    let newVisit: AnyVisit;
+
+    if (visit.type === 'transporter') {
+      const transporterVisit = visit as Omit<TransporterVisit, 'entryTime' | 'exitTime' | 'docId'>;
+      newVisit = {
+        ...baseVisitData,
+        haulierCompany: transporterVisit.haulierCompany,
+        licensePlate: transporterVisit.licensePlate.toUpperCase(),
+        trailerLicensePlate: transporterVisit.trailerLicensePlate?.toUpperCase(),
+        type: 'transporter',
+      };
+    } else {
+      newVisit = {
+        ...baseVisitData,
+        type: 'general',
+      };
+    }
+    
+    const updatedVisits = [newVisit, ...visits];
+    saveVisits(updatedVisits);
+
+    toast({
+      title: t('entry_registered'),
+      description: t('entry_registered_detail').replace('{name}', visit.name),
+    });
+    return { success: true };
   };
 
   const registerExit = async (dni: string): Promise<{ success: boolean; message?: string }> => {
     const upperCaseDni = dni.toUpperCase();
-    const q = query(
-      collection(db, VISITS_COLLECTION),
-      where('id', '==', upperCaseDni),
-      where('exitTime', '==', null)
+    const activeVisits = visits.filter(
+      (v) => v.id.toUpperCase() === upperCaseDni && v.exitTime === null && isToday(new Date(v.entryTime))
     );
-    
-    try {
-      const querySnapshot = await getDocs(q).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: VISITS_COLLECTION,
-            operation: 'list',
-            requestResourceData: { where: `id == ${upperCaseDni} and exitTime == null`}
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-      
-      if (querySnapshot.empty) {
-        const errorMessage = t('no_active_visit_today');
-        toast({
-          title: t('exit_registration_error'),
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        return { success: false, message: errorMessage };
-      }
 
-      const activeVisits = querySnapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id }));
-      activeVisits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
-      const latestVisitDoc = activeVisits[0];
-
-      const exitTime = new Date().toISOString();
-      const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.docId);
-      const updateData = { exitTime: exitTime };
-
-      await updateDoc(visitDocRef, updateData).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: visitDocRef.path,
-            operation: 'update',
-            requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-      
-      setVisits(prevVisits => prevVisits.map(v => v.docId === latestVisitDoc.docId ? {...v, exitTime: exitTime} : v))
-
+    if (activeVisits.length === 0) {
+      const errorMessage = t('no_active_visit_today');
       toast({
-        title: t('exit_registered'),
-        description: t('exit_registered_detail').replace('{name}', latestVisitDoc.name),
+        title: t('exit_registration_error'),
+        description: errorMessage,
+        variant: 'destructive',
       });
-      return { success: true };
-    } catch(error) {
-      if (!(error instanceof FirestorePermissionError)) {
-        console.error("Error registering exit:", error);
-        toast({ title: 'Error', description: 'No se pudo registrar la salida.', variant: 'destructive' });
-      }
-      return { success: false, message: 'No se pudo registrar la salida.'};
+      return { success: false, message: errorMessage };
     }
+
+    activeVisits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+    const latestVisitDoc = activeVisits[0];
+
+    const exitTime = new Date().toISOString();
+    
+    const updatedVisits = visits.map(v => 
+      v.docId === latestVisitDoc.docId ? { ...v, exitTime: exitTime } : v
+    );
+    saveVisits(updatedVisits);
+
+    toast({
+      title: t('exit_registered'),
+      description: t('exit_registered_detail').replace('{name}', latestVisitDoc.name),
+    });
+    return { success: true };
   };
 
   const getActiveVisits = useCallback(() => {
