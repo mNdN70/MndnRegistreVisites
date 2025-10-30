@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BaseVisit } from '@/lib/types';
 import { errorEmitter } from '@/lib/error-emitter';
@@ -16,6 +16,7 @@ export const useVisitSearch = (dni: string) => {
   const [visitData, setVisitData] = useState<BaseVisit | null>(null);
   const [loading, setLoading] = useState(false);
   const [debouncedDni, setDebouncedDni] = useState(dni);
+  const db = useFirestore();
 
   useEffect(() => {
     const handler = setTimeout(() => {

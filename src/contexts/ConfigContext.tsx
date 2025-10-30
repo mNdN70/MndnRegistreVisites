@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, createContext, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import {
   collection,
   getDocs,
@@ -59,6 +59,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const db = useFirestore();
   
   const fetchConfig = useCallback(async () => {
     setLoading(true);
@@ -103,7 +104,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
             });
             errorEmitter.emit('permission-error', permissionError);
         });
-  }, [departments, toast, t]);
+  }, [departments, toast, t, db]);
 
   const removeDepartment = useCallback(async (departmentName: string) => {
     const deptDocRef = doc(db, DEPARTMENTS_COLLECTION, departmentName);
@@ -137,7 +138,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         errorEmitter.emit('permission-error', permissionError);
     });
 
-  }, [toast, t]);
+  }, [toast, t, db]);
 
 
   const addEmployee = useCallback(async (employee: Omit<Employee, 'id'>) => {
@@ -159,7 +160,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
-  }, [employees, toast, t]);
+  }, [employees, toast, t, db]);
 
   const removeEmployee = useCallback(async (employeeName: string) => {
     const employeeToRemove = employees.find(e => e.name === employeeName);
@@ -182,7 +183,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         errorEmitter.emit('permission-error', permissionError);
       });
 
-  }, [employees, toast, t]);
+  }, [employees, toast, t, db]);
   
   const updateEmployee = useCallback(async (employeeId: string, employeeData: Omit<Employee, 'id'>) => {
     const employeeRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
@@ -199,7 +200,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         });
         errorEmitter.emit('permission-error', permissionError);
       });
-  }, [toast]);
+  }, [toast, db]);
  
  const getReportRecipients = useCallback(() => {
     return employees

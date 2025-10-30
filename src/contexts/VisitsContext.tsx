@@ -5,7 +5,7 @@ import { AnyVisit, TransporterVisit } from '@/lib/types';
 import { useState, useEffect, useCallback, createContext, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { 
   collection, 
   getDocs, 
@@ -49,6 +49,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     from: startOfDay(new Date()),
     to: endOfDay(new Date())
   });
+  const db = useFirestore();
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
@@ -80,7 +81,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, db]);
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {
@@ -312,5 +313,3 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
-
-    
