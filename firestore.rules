@@ -1,81 +1,51 @@
 /**
- * @file Firebase Security Rules for Visit Logging Application
+ * @file Overview
+ * This ruleset enforces a basic security model where any authenticated user can read all data,
+ * but write access is completely forbidden in this prototype to prevent accidental data modification.
  *
- * @core Philosophy:
- * This ruleset enforces a flexible security model that allows public read access to visit records
- * while restricting write access to authorized users (owners). It also enforces a role-based access to persons_to_visit collection (admin only).
- *
- * @data Structure:
- * The database consists of two main collections:
+ * Data Structure:
  * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
  * - /visits/{visitId}: Stores visit records.
  *
- * @key Security Decisions:
- * - Public read access is granted for the `visits` collection.
- * - Only authenticated users can create, update, or delete visit records, and only if they "own" the record.
- * - Listing persons_to_visit is allowed only to the administrators
- * - Data shape validation is relaxed to allow for rapid prototyping, except for authorization-critical fields.
- * - A boolean `active` field is denormalized into the `visits` collection to filter active visits more performantly.
- *
- * @denormalization for Authorization:
- *  No specific denormalization for authorization is applied in this iteration.  Future iterations may include denormalizing user roles
- *  or access control lists directly onto documents to avoid complex `get()` calls.
- *
- * @structural Segregation:
- *  No explicit segregation between private and public data is applied. The `visits` collection is treated as publicly readable.
+ * Key Security Decisions:
+ * - Read access is open to all authenticated users for prototyping purposes.
+ * - Write access (create, update, delete) is completely denied to prevent accidental data modification during prototyping.
+ * - The prototype does not enforce any data validation beyond requiring authentication for access.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for the `/persons_to_visit/{personToVisitId}` collection.
+     * @description Allows any authenticated user to read information about people to visit.  Writes are forbidden.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Authenticated Admin Users only.
-     * @allow (create, update, delete) Authenticated Admin Users only.
-     * @deny (get, list) Non-authenticated users.
-     * @deny (create, update, delete) Non-authenticated users.
-     * @principle Requires that any modification of person to visit resources are done by authenticated users.
+     * @allow (get, list) User with any valid auth can read person to visit data.
+     * @deny (create, update, delete) No one can modify person to visit data in this prototype.
+     * @principle Allows open reads for authenticated users during prototyping, but prevents all writes.
      */
     match /persons_to_visit/{personToVisitId} {
-      // Allow anyone to read
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      // Only signed-in users can create, update, and delete
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for the `/visits/{visitId}` collection.
+     * @description Allows any authenticated user to read visit records. Writes are forbidden.
      * @path /visits/{visitId}
-     * @allow (get, list) Public access.
-     * @allow (create) Authenticated users can create new visits if `request.auth.uid == request.resource.data.ownerId`
-     * @allow (update, delete) Authenticated users can update/delete their own visits if `request.auth.uid == resource.data.ownerId`
-     * @deny (create, update, delete) If the document does not exist.
-     * @deny (create) If the user tries to set an incorrect ownerId during creation.
-     * @deny (update) If the user tries to modify ownerId.
-     * @principle Enforces document ownership for writes, allows public reads.
+     * @allow (get, list) User with any valid auth can read visit data.
+     * @deny (create, update, delete) No one can modify visit data in this prototype.
+     * @principle Allows open reads for authenticated users during prototyping, but prevents all writes.
      */
     match /visits/{visitId} {
-      // Allow anyone to read visit records
-      allow get: if true;
-      allow list: if true;
-
-      // Only signed-in users can create visit records.
-      allow create: if isSignedIn();
-
-      // Only the owner can update the visit record, and only if it exists.
-      allow update: if isSignedIn();
-
-      // Only the owner can delete the visit record, and only if it exists.
-      allow delete: if isSignedIn();
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
     }
-  }
 
-  // Helper function to determine if the user is signed in
-  function isSignedIn() {
-    return request.auth != null;
+    /**
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
   }
 }
