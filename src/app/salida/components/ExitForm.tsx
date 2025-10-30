@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useVisits } from "@/hooks/use-visits";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -25,7 +25,7 @@ const getFormSchema = (t: (key: string) => string) => z.object({
 
 export default function ExitForm() {
   const router = useRouter();
-  const { registerExit } = useVisits();
+  const { registerExit } = useVisitsContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useTranslation();
   const formSchema = getFormSchema(t);

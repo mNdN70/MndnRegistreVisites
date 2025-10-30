@@ -9,13 +9,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
-import { useVisits } from "@/hooks/use-visits";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import { useConfig } from "@/hooks/use-config";
 
 export default function ConsultasPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { exportActiveVisitsToCSV } = useVisits();
+  const { exportActiveVisitsToCSV } = useVisitsContext();
   const { getReportRecipients } = useConfig();
   const [isAuthorized, setIsAuthorized] = useState(false);
 

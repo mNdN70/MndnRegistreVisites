@@ -1,6 +1,6 @@
 "use client";
 
-import { useVisits } from "@/hooks/use-visits";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import { useEffect } from "react";
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function ActiveVisitsTable() {
-  const { getActiveVisits, loading, fetchVisits } = useVisits();
+  const { getActiveVisits, loading, fetchVisits } = useVisitsContext();
   
   useEffect(() => {
     fetchVisits();

@@ -23,7 +23,7 @@ import {
   SelectPortal,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useVisits } from "@/hooks/use-visits";
+import { useVisitsContext } from "@/hooks/use-visits-context";
 import { useConfig } from "@/hooks/use-config";
 import { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
@@ -47,7 +47,7 @@ const getFormSchema = (t: (key: string) => string) => z.object({
 
 export default function EntryForm() {
   const router = useRouter();
-  const { addVisit } = useVisits();
+  const { addVisit } = useVisitsContext();
   const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirect, setRedirect] = useState(false);
@@ -270,5 +270,3 @@ export default function EntryForm() {
     </>
   );
 }
-
-    
