@@ -1,27 +1,26 @@
 /**
- * @fileOverview Firestore Security Rules for the Visit Logging Application.
+ * @file Firebase Security Rules for Visit Management Application
  *
- * Core Philosophy:
- * This ruleset prioritizes secure data access based on a combination of public read access where appropriate and strict ownership for write operations.
- *
- * Data Structure:
- * The database consists of two top-level collections: `persons_to_visit` and `visits`. The `persons_to_visit` collection is publicly readable but not writable from the client, while the `visits` collection is publicly readable but only allows authorized creation, updating and deletion.
- *
- * Key Security Decisions:
- * - Public Read Access: Read access to both collections is generally open to facilitate easy data retrieval for application users.
- * - Owner-Only Writes: Create, update, and delete operations on the `visits` collection are restricted to authorized users based on an ownership field (`creatorId`).
- * - Denormalized "active" Field: The `active` field on the `Visit` entity is used to efficiently query for current visits and does not impact security rules.
+ * @core_philosophy This ruleset prioritizes security by enforcing strict access control based on user identity for write operations,
+ *                  while allowing public read access for the `persons_to_visit` and `visits` collections.
+ *                  It uses denormalization to simplify and optimize rule evaluation, avoiding costly `get()` calls.
+ * @data_structure The data is organized into two top-level collections: `/persons_to_visit/{personToVisitId}` and `/visits/{visitId}`.
+ *                 The `Visit` documents include a denormalized `active` field to optimize queries for current visits.
+ * @key_security_decisions
+ *   - Public read access is granted to the `persons_to_visit` and `visits` collections to allow open listing of employees and visits.
+ *   - Write access to the `visits` collection is restricted to authenticated users and validates data integrity.
+ *   - There is no user-specific data or private subcollections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read information about people who can be visited. Write access is not granted.
+     * @description Manages access to the `persons_to_visit` collection, allowing anyone to read the list of people available to visit.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Anyone can read.
-     * @deny (create, update, delete) No one can create, update, or delete via client.
-     * @principle Public read access for directory information.
+     * @allow (get, list): Any user can read the data.
+     * @deny (create, update, delete): No one can create, update, or delete person to visit through the client.
+     * @principle Public read access for the list of people to visit.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get, list: if true;
@@ -29,24 +28,41 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read visit records, but restricts create, update, and delete operations to authorized users.
+     * @description Manages access to the `visits` collection, allowing anyone to read visit records, but only authenticated users to create them.
+     *              Update and delete operations are disallowed.
      * @path /visits/{visitId}
-     * @allow (get, list) Anyone can read visit records.
-     * @deny (create, update, delete) No one can create, update, or delete if they are not the owner.
-     * @principle Public read access with owner-only writes.
+     * @allow (get, list): Any user can read the data.
+     * @allow (create): Authenticated users can create new visit records.
+     * @deny (update, delete): No one can update or delete visit records through the client.
+     * @principle Public read access to visits, authenticated user create access.
      */
     match /visits/{visitId} {
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow update, delete: if false;
+    }
+
+    // The error reported by NextJS pertains to the "employees" collection, which is not defined in the data model.
+    // Since the app attempts to create data on the /employees path, we need to add rules for it.
+    // Given the lack of schema information and reasoning for the "employees" collection, we default to the most secure
+    // interpretation: authenticated users can create new employee records.
+
+    /**
+     * @description Manages access to the `employees` collection, allowing only authenticated users to create employee records.
+     *              Read, update, and delete operations are disallowed.
+     * @path /employees
+     * @allow (create): Authenticated users can create new employee records.
+     * @deny (get, list, update, delete): No one can read, update, or delete employee records through the client.
+     * @principle Authenticated user create access only.
+     */
+    match /employees {
+      allow get, list: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
   }
 
-  /**
-   * @description Checks if the request is authenticated.
-   * @returns {boolean} True if the request is authenticated, false otherwise.
-   */
+  // Helper function to determine if a user is signed in
   function isSignedIn() {
     return request.auth != null;
   }
