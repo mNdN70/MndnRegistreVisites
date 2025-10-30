@@ -1,13 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access on the users collection for login purposes.
-    // This is necessary because the login form queries the collection to verify credentials.
+    
+    // Allow public read access to the users collection for login purposes
     match /users/{userId} {
       allow read;
     }
 
-    // Default deny all other reads and writes
+    // Secure all other collections
     match /{document=**} {
       allow read, write: if false;
     }

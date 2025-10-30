@@ -71,7 +71,7 @@ export default function LoginForm() {
       } else {
         toast({
           title: 'Error d\'accés',
-          description: 'Usuari o contrasenya incorrectes.',
+          description: 'L\'usuari o la contrasenya són incorrectes. Si us plau, torneu-ho a provar.',
           variant: "destructive",
         });
         setIsSubmitting(false);
