@@ -1,6 +1,7 @@
 "use client";
 
-import { Employee, useConfig } from "@/hooks/use-config";
+import { useConfig } from "@/hooks/use-config";
+import type { Employee } from "@/contexts/ConfigContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -313,7 +314,7 @@ export default function ConfigPanel() {
                     <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(emp)}>
                       <Pencil className="h-4 w-4 text-primary" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => removeEmployee(emp.name)}>
+                    <Button variant="ghost" size="icon" onClick={() => removeEmployee(emp.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>

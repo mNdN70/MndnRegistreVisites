@@ -7,9 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
+import { useFirestore } from '@/firebase';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
-const VISITS_STORAGE_KEY = 'menadiona-visits';
+const VISITS_COLLECTION = 'visits';
 
 interface VisitsContextType {
     visits: AnyVisit[];
@@ -22,50 +25,57 @@ interface VisitsContextType {
     getFilteredVisits: () => AnyVisit[];
     exportToCSV: (filename: string, recipients: string[]) => void;
     exportActiveVisitsToCSV: (recipients: string[]) => void;
-    fetchVisits: () => Promise<void>;
+    fetchVisits: () => void;
 }
 
 export const VisitsContext = createContext<VisitsContextType | undefined>(undefined);
 
 export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfDay(new Date()),
     to: endOfDay(new Date())
   });
+  const db = useFirestore();
 
-  const fetchVisits = useCallback(async () => {
+  const fetchVisits = useCallback(() => {
     setLoading(true);
-    if (typeof window !== 'undefined') {
-      const storedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
-      if (storedVisits) {
-        setVisits(JSON.parse(storedVisits));
+    const visitsCollection = collection(db, VISITS_COLLECTION);
+    const unsubscribe = onSnapshot(visitsCollection, 
+      (snapshot) => {
+        const visitsData = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as AnyVisit));
+        setVisits(visitsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching visits: ", error);
+        toast({ title: "Error", description: "Could not fetch visits.", variant: "destructive" });
+        setLoading(false);
       }
-    }
-    setLoading(false);
-  }, []);
+    );
+    return unsubscribe;
+  }, [db, toast]);
 
   useEffect(() => {
-    fetchVisits();
+    const unsubscribe = fetchVisits();
+    return () => unsubscribe();
   }, [fetchVisits]);
-
-  const saveVisits = (updatedVisits: AnyVisit[]) => {
-    setVisits(updatedVisits);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(VISITS_STORAGE_KEY, JSON.stringify(updatedVisits));
-    }
-  };
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     const upperCaseId = visit.id.toUpperCase();
-    const activeVisit = visits.find(
-      (v) => v.id.toUpperCase() === upperCaseId && v.exitTime === null
+    
+    const activeVisitQuery = query(
+      collection(db, VISITS_COLLECTION),
+      where('id', '==', upperCaseId),
+      where('exitTime', '==', null)
     );
+    
+    const activeVisitSnapshot = await getDocs(activeVisitQuery);
 
-    if (activeVisit) {
+    if (!activeVisitSnapshot.empty) {
       const errorMessage = t('duplicate_entry_detail');
       toast({
         title: t('duplicate_entry'),
@@ -76,7 +86,6 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const baseVisitData = {
-      docId: uuidv4(),
       id: upperCaseId,
       name: visit.name,
       company: visit.company,
@@ -89,7 +98,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       autoExit: false,
     };
 
-    let newVisit: AnyVisit;
+    let newVisit: Omit<AnyVisit, 'docId'>;
 
     if (visit.type === 'transporter') {
       const transporterVisit = visit as Omit<TransporterVisit, 'entryTime' | 'exitTime' | 'docId'>;
@@ -107,48 +116,73 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       };
     }
     
-    const updatedVisits = [newVisit, ...visits];
-    saveVisits(updatedVisits);
-
-    toast({
-      title: t('entry_registered'),
-      description: t('entry_registered_detail').replace('{name}', visit.name),
-    });
-    return { success: true };
+      try {
+        await addDoc(collection(db, VISITS_COLLECTION), newVisit)
+        toast({
+            title: t('entry_registered'),
+            description: t('entry_registered_detail').replace('{name}', visit.name),
+        });
+        return { success: true };
+      } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: VISITS_COLLECTION,
+            operation: 'create',
+            requestResourceData: newVisit,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        return { success: false, message: 'Permission error' };
+      }
   };
 
   const registerExit = async (dni: string): Promise<{ success: boolean; message?: string }> => {
     const upperCaseDni = dni.toUpperCase();
-    const activeVisits = visits.filter(
-      (v) => v.id.toUpperCase() === upperCaseDni && v.exitTime === null && isToday(new Date(v.entryTime))
+    const q = query(
+      collection(db, VISITS_COLLECTION),
+      where('id', '==', upperCaseDni),
+      where('exitTime', '==', null)
     );
 
-    if (activeVisits.length === 0) {
-      const errorMessage = t('no_active_visit_today');
+    try {
+      const querySnapshot = await getDocs(q);
+
+      const todayActiveVisits = querySnapshot.docs.filter(doc => isToday(new Date(doc.data().entryTime)));
+
+      if (todayActiveVisits.length === 0) {
+        const errorMessage = t('no_active_visit_today');
+        toast({
+          title: t('exit_registration_error'),
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return { success: false, message: errorMessage };
+      }
+      
+      todayActiveVisits.sort((a, b) => new Date(b.data().entryTime).getTime() - new Date(a.data().entryTime).getTime());
+      const latestVisitDoc = todayActiveVisits[0];
+
+      const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.id);
+      const updateData = { exitTime: new Date().toISOString() };
+      
+      await updateDoc(visitDocRef, updateData)
+      
       toast({
-        title: t('exit_registration_error'),
-        description: errorMessage,
-        variant: 'destructive',
+        title: t('exit_registered'),
+        description: t('exit_registered_detail').replace('{name}', latestVisitDoc.data().name),
       });
-      return { success: false, message: errorMessage };
+
+      return { success: true };
+
+    } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: VISITS_COLLECTION,
+            operation: 'list',
+            requestResourceData: { where: `id == ${upperCaseDni} and exitTime == null`}
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        return { success: false, message: 'Permission error' };
     }
-
-    activeVisits.sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
-    const latestVisitDoc = activeVisits[0];
-
-    const exitTime = new Date().toISOString();
-    
-    const updatedVisits = visits.map(v => 
-      v.docId === latestVisitDoc.docId ? { ...v, exitTime: exitTime } : v
-    );
-    saveVisits(updatedVisits);
-
-    toast({
-      title: t('exit_registered'),
-      description: t('exit_registered_detail').replace('{name}', latestVisitDoc.name),
-    });
-    return { success: true };
   };
+
 
   const getActiveVisits = useCallback(() => {
     return visits.filter(v => v.exitTime === null && isToday(new Date(v.entryTime))).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());

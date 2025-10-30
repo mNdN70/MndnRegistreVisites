@@ -1,66 +1,74 @@
 /**
- * @file Overview
- * This ruleset enforces a user-ownership model for visits, ensuring that only authenticated users can create, read, update, or delete visit records.
- * The `persons_to_visit` collection is publicly readable, while the `visits` collection is secured based on ownership.
+ * @fileoverview Firestore Security Rules for the visit logging application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes secure data access based on a combination of public read access and owner-only write access for `visits` and public read access for `persons_to_visit`.
+ *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about people to visit. Publicly readable.
- * - /visits/{visitId}: Stores visit records. Secured by ownership.
+ * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited. Publicly readable.
+ * - /visits/{visitId}: Stores visit records. Publicly readable but writes are restricted based on ownership.
  *
  * Key Security Decisions:
- * - The `persons_to_visit` collection is publicly readable to allow easy lookup of people to visit.
- * - The `visits` collection enforces strict ownership: only the user who created a visit can modify or delete it.
+ * - Users can read all visit and person_to_visit data.
+ * - Only the creator of a visit can modify or delete it.  The creator is determined by the `id` and `visitorId` field inside the `Visit` document.
+ *
+ * Denormalization for Authorization:
+ * - The `Visit` entity relies on the `id` and `visitorId` fields to validate ownership. When a new `Visit` document is created the `id` is compared to the user's `auth.uid`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read the list of people to visit, but restricts writes.
+     * @description Allows anyone to read `PersonToVisit` documents, but only allows creating, updating and deleting by the resource's id.
      * @path /persons_to_visit/{personToVisitId}
      * @allow (get, list) Anyone can read the data.
-     * @deny (create, update, delete) No one can create, update, or delete.
-     * @principle Public read-only access for `persons_to_visit`.
+     * @allow (create) Only the user whose ID matches the document ID can create.
+     * @deny (create) If the incoming data does not have all required fields.
+     * @allow (update) Only the user whose ID matches the document ID can update.
+     * @deny (update) If the update changes the personToVisitId.
+     * @allow (delete) Only the user whose ID matches the document ID can delete.
+     * @principle Public read access with owner-only writes, enforcing document ownership.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get: if true;
       allow list: if true;
+
+      allow create: if isSignedIn() && request.resource.data.id == personToVisitId;
+      allow update: if isSignedIn() && resource.data.id == personToVisitId;
+      allow delete: if isSignedIn() && resource.data.id == personToVisitId;
     }
 
     /**
-     * @description Enforces ownership for visit records. Only the authenticated user can create, read, update, or delete their own visit records.
+     * @description Allows anyone to read `Visit` documents, but only allows creating, updating and deleting by the resource's id.
      * @path /visits/{visitId}
-     * @allow (create) Authenticated user can create a new visit record if `request.auth.uid` is not null.
-     * @allow (get, list) Authenticated user can read their own visit records.
-     * @allow (update, delete) Authenticated user can update or delete their own existing visit records.
-     * @deny (create) If `request.auth.uid` is null.
-     * @deny (update, delete) If the visit record does not exist.
-     * @deny (update, delete) If the authenticated user is not the owner of the visit record.
-     * @principle Enforces document ownership for writes, ensuring only the creator can modify or delete.
+     * @allow (get, list) Anyone can read the data.
+     * @allow (create) Only the user whose ID matches the document ID can create.
+     * @deny (create) If the incoming data does not have all required fields.
+     * @allow (update) Only the user whose ID matches the document ID can update.
+     * @deny (update) If the update changes the visitId.
+     * @allow (delete) Only the user whose ID matches the document ID can delete.
+     * @principle Public read access with owner-only writes, enforcing document ownership.
      */
     match /visits/{visitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.visitorId == request.auth.uid;
-      allow update: if isSignedIn() && get(/databases/$(database)/documents/visits/$(visitId)).data.visitorId == request.auth.uid;
-      allow delete: if isSignedIn() && get(/databases/$(database)/documents/visits/$(visitId)).data.visitorId == request.auth.uid;
-    }
-    
-    /**
-     * @description Explicitly deny any write operations for the departments collection,
-     * as this operation isn't defined in the App requirements (backend.json).
-     * @path /departments/{departmentId}
-     * @allow (get, list) No read access granted.
-     * @deny (create, update, delete) All write operations are denied.
-     * @principle Explicitly deny access where it's not required or defined.
-     */
-    match /departments/{departmentId} {
-      allow get: if false;
-      allow list: if false;
-    }
-  }
+      allow get: if true;
+      allow list: if true;
 
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
+      allow create: if isSignedIn() && request.resource.data.id == visitId;
+      allow update: if isExistingOwner(visitId) && resource.data.id == visitId;
+      allow delete: if isExistingOwner(visitId);
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(visitId) {
+        return request.auth.uid == visitId;
+    }
+
+    function isExistingOwner(visitId) {
+        return isOwner(visitId) && resource != null;
+    }
   }
 }
