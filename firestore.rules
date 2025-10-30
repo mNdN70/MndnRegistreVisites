@@ -1,49 +1,45 @@
 /**
- * @file Overview
- * This ruleset enforces a basic security model that allows read access to all documents
- * but restricts write access.
- *
- * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records.
- *
- * Key Security Decisions:
- * - Public read access is granted to both collections for prototyping.
- * - All write operations (create, update, delete) are forbidden to provide an initial secure state.
- * - No complex validation is performed during this prototyping stage.
- *
- * Denormalization for Authorization:
- *   N/A - Authorization checks are not implemented in this prototype.
- *
- * Structural Segregation:
- *   N/A - No segregation of public and private data is implemented in this prototype.
+ * @file Firebase Security Rules for Visit Logging Application
+ * @core Philosophy: This ruleset prioritizes simplicity and security, enabling basic visit logging functionality.  It provides open read access to visit and employee data and restricts write access.
+ * @data Structure:
+ *   - /persons_to_visit/{personToVisitId}: Stores information about company employees who can receive visitors.
+ *   - /visits/{visitId}: Stores records of visits, including visitor details, timestamps, and the person being visited.
+ * @key Security Decisions:
+ *   - Public read access is granted to both `persons_to_visit` and `visits` collections.
+ *   - No write access to `persons_to_visit` or `visits` is granted, as this is a prototype.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows read access to person to visit records, but denies all write access.
-     * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) - Any user can read person to visit records.
-     * @deny (create, update, delete) - No user can create, update, or delete person to visit records.
-     * @principle Allows public read access for prototyping, while denying all writes for security.
+     * @description: Rules for the `/persons_to_visit/{personToVisitId}` collection. Allows public read access.  No writes are allowed.
+     * @path: /persons_to_visit/{personToVisitId}
+     * @allow: (get, list) - Any user can read person to visit data.
+     * @deny: (create, update, delete) - No user can create, update, or delete person to visit data.
+     * @principle: Provides open read access to employee data, while prohibiting writes.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows read access to visit records, but denies all write access.
-     * @path /visits/{visitId}
-     * @allow (get, list) - Any user can read visit records.
-     * @deny (create, update, delete) - No user can create, update, or delete visit records.
-     * @principle Allows public read access for prototyping, while denying all writes for security.
+     * @description: Rules for the `/visits/{visitId}` collection. Allows public read access. No writes are allowed.
+     * @path: /visits/{visitId}
+     * @allow: (get, list) - Any user can read visit data.
+     * @deny: (create, update, delete) - No user can create, update, or delete visit data.
+     * @principle: Provides open read access to visit data, while prohibiting writes.
      */
     match /visits/{visitId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
