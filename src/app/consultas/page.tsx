@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
 import { useVisits } from "@/hooks/use-visits";
-import { VisitsProvider } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
 
-function ConsultasPageContent() {
+export default function ConsultasPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { exportActiveVisitsToCSV } = useVisits();
@@ -81,14 +80,5 @@ function ConsultasPageContent() {
         </CardContent>
       </Card>
     </PageContainer>
-  );
-}
-
-export default function ConsultasPage() {
-  // Wrap with VisitsProvider to ensure useVisits and useConfig hooks have context
-  return (
-    <VisitsProvider>
-        <ConsultasPageContent />
-    </VisitsProvider>
   );
 }

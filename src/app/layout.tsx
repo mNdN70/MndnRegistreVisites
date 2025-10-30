@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { LanguageProvider } from '@/hooks/use-translation';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ConfigProvider } from '@/contexts/ConfigContext';
+import { VisitsProvider } from '@/contexts/VisitsContext';
 
 export const metadata: Metadata = {
   title: 'MENADIONA',
@@ -24,11 +25,13 @@ export default function RootLayout({
         <LanguageProvider>
           <FirebaseClientProvider>
             <ConfigProvider>
-              <Header />
-              <main className="flex-grow">
-              {children}
-              </main>
-              <Toaster />
+              <VisitsProvider>
+                <Header />
+                <main className="flex-grow">
+                {children}
+                </main>
+                <Toaster />
+              </VisitsProvider>
             </ConfigProvider>
           </FirebaseClientProvider>
         </LanguageProvider>
