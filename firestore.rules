@@ -1,27 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow anyone to read the user list for login purposes
+    // Permite que cualquiera lea (get, list) la colección de usuarios.
+    // Esto es necesario para que el formulario de login pueda consultar si un usuario existe.
     match /users/{userId} {
-      allow read;
-      allow write: if request.auth != null;
+      allow read: if true;
     }
-    
-    // Allow anyone to create/update visits (for entry/exit)
-    // Authenticated users can read/delete records from the config panel
+
+    // Permite que cualquiera cree o actualice una visita (para registrar entrada/salida).
     match /visits/{visitId} {
       allow create, update: if true;
-      allow read, delete: if request.auth != null;
     }
 
-    // Config collections can only be modified by authenticated users
-    match /departments/{deptId} {
-        allow read, write: if request.auth != null;
-    }
-
-    match /employees/{empId} {
-        allow read, write: if request.auth != null;
+    // Para todas las demás rutas, se requiere autenticación para cualquier tipo de acceso
+    // que no haya sido explícitamente permitido arriba.
+    match /{path=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
