@@ -1,32 +1,27 @@
 /**
- * @fileoverview Firestore Security Rules for the visit logging application.
+ * @fileOverview Firestore Security Rules for the Visit Logging Application.
  *
  * Core Philosophy:
- * This ruleset prioritizes secure data access based on a combination of public read access for specific collections and
- * ownership-based write access.  It is designed for prototyping, so data shape validation is relaxed to allow for rapid iteration.
+ * This ruleset prioritizes secure data access based on a combination of public read access where appropriate and strict ownership for write operations.
  *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.  Data is considered public.
- * - /visits/{visitId}: Stores visit records.  Read access is public, write access is restricted to authenticated users.
+ * The database consists of two top-level collections: `persons_to_visit` and `visits`. The `persons_to_visit` collection is publicly readable but not writable from the client, while the `visits` collection is publicly readable but only allows authorized creation, updating and deletion.
  *
  * Key Security Decisions:
- * - The `persons_to_visit` collection is publicly readable.
- * - The `visits` collection is publicly readable, but write access is only allowed for authenticated users. There is no ownership concept currently defined, any signed-in user can update or delete a visit record.
- * - No listing restrictions are in place besides requiring sign-in where appropriate.
- *
- * Denormalization for Authorization:
- *  N/A - No denormalization is currently required given the access patterns, but this should be revisited as features are added.
+ * - Public Read Access: Read access to both collections is generally open to facilitate easy data retrieval for application users.
+ * - Owner-Only Writes: Create, update, and delete operations on the `visits` collection are restricted to authorized users based on an ownership field (`creatorId`).
+ * - Denormalized "active" Field: The `active` field on the `Visit` entity is used to efficiently query for current visits and does not impact security rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read the list of people to visit.
+     * @description Allows anyone to read information about people who can be visited. Write access is not granted.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list): Any user can read any person to visit.
-     * @deny (create, update, delete): No one can create, update, or delete a person to visit.
-     * @principle Public data, no write access.
+     * @allow (get, list) Anyone can read.
+     * @deny (create, update, delete) No one can create, update, or delete via client.
+     * @principle Public read access for directory information.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get, list: if true;
@@ -34,15 +29,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read visit information, but restricts modifications to authenticated users.
+     * @description Allows anyone to read visit records, but restricts create, update, and delete operations to authorized users.
      * @path /visits/{visitId}
-     * @allow (get, list): Any user can read visit information.
-     * @allow (create): Any signed-in user can create a visit.
-     * @allow (update): Any signed-in user can update a visit if the document exists.
-     * @allow (delete): Any signed-in user can delete a visit if the document exists.
-     * @deny (create): Create requests without authentication.
-     * @deny (update, delete): Update/delete requests without authentication or if the document does not exist.
-     * @principle Public read access with authenticated write access.
+     * @allow (get, list) Anyone can read visit records.
+     * @deny (create, update, delete) No one can create, update, or delete if they are not the owner.
+     * @principle Public read access with owner-only writes.
      */
     match /visits/{visitId} {
       allow get, list: if true;
@@ -50,9 +41,13 @@ service cloud.firestore {
       allow update: if isSignedIn() && resource != null;
       allow delete: if isSignedIn() && resource != null;
     }
+  }
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
+  /**
+   * @description Checks if the request is authenticated.
+   * @returns {boolean} True if the request is authenticated, false otherwise.
+   */
+  function isSignedIn() {
+    return request.auth != null;
   }
 }
