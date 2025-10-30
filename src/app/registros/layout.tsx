@@ -1,14 +1,20 @@
 "use client";
 
-import { useVisitsContext } from "@/hooks/use-visits-context";
-import { useEffect } from "react";
+import { VisitsContext } from "@/contexts/VisitsContext";
+import { useContext, useEffect } from "react";
 
 export default function RecordsLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { fetchVisits } = useVisitsContext();
+    const context = useContext(VisitsContext);
+
+    if (!context) {
+        throw new Error("useVisits must be used within a VisitsProvider");
+    }
+    
+    const { fetchVisits } = context;
 
     useEffect(() => {
         fetchVisits();
