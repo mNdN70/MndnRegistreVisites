@@ -1,63 +1,63 @@
-/**
- * @fileOverview Firestore Security Rules for the visit logging application.
- *
- * Core Philosophy:
- * This ruleset prioritizes secure data access based on user authentication. It enforces
- * granular control over read and write operations on the `persons_to_visit` and `visits` collections.
- * The primary focus is on ensuring that only authenticated users can create, modify, or delete visit records.
- *
- * Data Structure:
- * The data is organized into two main collections:
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records with details about each visit.
- *
- * Key Security Decisions:
- * - Read access to both collections is open to all users, including unauthenticated users.
- * - Create, update, and delete operations on both collections are allowed for authenticated users.
- * - No specific role-based access control is implemented in this prototype; all authenticated users
- *   are treated equally.
- * - Data validation is minimal, focusing on authorization and relational integrity rather than
- *   strict schema enforcement.
- *
- * Denormalization for Authorization:
- *  - Not applicable in this prototype because there are no specific authorization requirements based on roles.
- *
- * Structural Segregation:
- *  - Not applicable in this prototype. There is no need to distinguish between private and public data.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for the `persons_to_visit` collection. Allows any authenticated user to create, read, update, and delete person to visit records.
-     * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Allow any user to read data.
-     * @allow (create, update, delete) Allow any authenticated user to modify data.
-     * @deny (create, update, delete) Deny unauthenticated users from modifying data.
-     * @principle Allows any authenticated user to manage person to visit records.
+     * @description Defines if the current user is signed in
+     * @return {boolean} True if the user is signed in
      */
-    match /persons_to_visit/{personToVisitId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     /**
-     * @description Rules for the `visits` collection. Allows any authenticated user to create, read, update, and delete visit records.
+     * @description Defines if the current user is the owner of the document
+     * @param {string} userId - The user id to check against the request auth UID.
+     * @return {boolean} True if the user id matches the request auth UID.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Defines if the current user is the owner of the document and the document exists
+     * @param {string} userId - The user id to check against the request auth UID.
+     * @return {boolean} True if the user id matches the request auth UID and the document exists.
+     */
+    function isExistingOwner() {
+        return isSignedIn() && resource.data.authorId == request.auth.uid;
+    }
+
+    /**
+     * @description Rules for the /persons_to_visit collection.
+     * @path /persons_to_visit/{personToVisitId}
+     * @allow (get, list) User can read person to visit data.
+     * @allow (create) User can create a new person to visit if authenticated.
+     * @deny (update) User cannot update person to visit data if not authenticated.
+     * @deny (delete) User cannot delete person to visit data if not authenticated.
+     * @principle Public read, owner-only writes.
+     */
+    match /persons_to_visit/{personToVisitId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isExistingOwner();
+      allow delete: if isExistingOwner();
+    }
+
+    /**
+     * @description Rules for the /visits collection.
      * @path /visits/{visitId}
-     * @allow (get, list) Allow any user to read data.
-     * @allow (create, update, delete) Allow any authenticated user to modify data.
-     * @deny (create, update, delete) Deny unauthenticated users from modifying data.
-     * @principle Allows any authenticated user to manage visit records.
+     * @allow (get, list) User can read visit data.
+     * @allow (create) User can create a new visit if authenticated and the ownerId matches their uid.
+     * @deny (update) User cannot update visit data if not the owner.
+     * @deny (delete) User cannot delete visit data if not the owner.
+     * @principle Public read, owner-only writes with owner id validation.
      */
     match /visits/{visitId} {
       allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-    }
-
-    // Helper function to check if the user is signed in
-    function isSignedIn() {
-      return request.auth != null;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isExistingOwner();
+      allow delete: if isExistingOwner();
     }
   }
 }
