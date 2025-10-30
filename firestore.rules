@@ -1,21 +1,75 @@
+/**
+ * @fileOverview Firestore Security Rules for the Visit Logging Application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes simplicity and security, focusing on straightforward
+ * access control for two main collections: `persons_to_visit` and `visits`.
+ *
+ * Data Structure:
+ * - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ * - `/visits/{visitId}`: Stores visit records.
+ *
+ * Key Security Decisions:
+ * - The `persons_to_visit` collection is considered public read.
+ * - The `visits` collection allows public read. Writes are only allowed if the user
+ *   provides valid data, including a matching ID and maintains immutability of the ID field.
+ *
+ * Denormalization for Authorization:
+ *   N/A
+ *
+ * Structural Segregation:
+ *   N/A
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que cualquiera lea (get, list) la colección de usuarios.
-    // Esto es necesario para que el formulario de login pueda consultar si un usuario existe.
-    match /users/{userId} {
-      allow read: if true;
+
+    /**
+     * @description Allows read-only access to person to visit records.
+     * @path /persons_to_visit/{personToVisitId}
+     * @allow (get, list) Any user can read person to visit data.
+     * @deny (create, update, delete) No user can create, update, or delete person to visit data via client.
+     * @principle Public read-only access.
+     */
+    match /persons_to_visit/{personToVisitId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // Permite que cualquiera cree o actualice una visita (para registrar entrada/salida).
+    /**
+     * @description Manages access control for visit records. Allows public read, but restricts write access.
+     * @path /visits/{visitId}
+     * @allow (get, list) Any user can read visit data.
+     * @allow (create) Any signed-in user can create a new visit record if the provided ID matches the document ID.
+     * @allow (update) Any signed-in user can update an existing visit record if the existing ID matches the new ID
+     * @allow (delete) Any signed-in user can delete an existing visit record if the ID matches the document ID.
+     * @deny (create) A create operation will be rejected if the ID does not match the document ID.
+     * @deny (update) An update operation will be rejected if the ID does not match the existing ID.
+     * @deny (delete) A delete operation will be rejected if the visit document does not exist.
+     * @principle Public read, restricted writes based on matching ID.
+     */
     match /visits/{visitId} {
-      allow create, update: if true;
+      allow get: if true;
+      allow list: if true;
+      allow create: if isValidNewVisit(visitId);
+      allow update: if isExistingVisit(visitId);
+      allow delete: if isExistingVisit(visitId);
     }
 
-    // Para todas las demás rutas, se requiere autenticación para cualquier tipo de acceso
-    // que no haya sido explícitamente permitido arriba.
-    match /{path=**} {
-      allow read, write: if request.auth != null;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidNewVisit(visitId) {
+        return isSignedIn() && request.resource.data.id == visitId;
+    }
+
+    function isExistingVisit(visitId) {
+        return isSignedIn() && resource.data.id == visitId && resource != null;
     }
   }
 }

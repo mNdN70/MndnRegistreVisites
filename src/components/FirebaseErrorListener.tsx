@@ -1,33 +1,39 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { errorEmitter } from "@/lib/error-emitter";
-import { FirestorePermissionError } from "@/lib/errors";
+import { useState, useEffect } from 'react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * An invisible component that listens for globally emitted 'permission-error' events.
+ * It throws any received error to be caught by Next.js's global-error.tsx.
+ */
 export function FirebaseErrorListener() {
-  const { toast } = useToast();
+  // Use the specific error type for the state for type safety.
+  const [error, setError] = useState<FirestorePermissionError | null>(null);
 
   useEffect(() => {
-    const handlePermissionError = (error: FirestorePermissionError) => {
-      console.error("A Firestore permission error was caught:", error.toString());
-      
-      toast({
-        variant: "destructive",
-        title: "Error de permisos",
-        description: "No tienes permiso para realizar esta acción. Contacta con el administrador.",
-        duration: 9000,
-      });
+    // The callback now expects a strongly-typed error, matching the event payload.
+    const handleError = (error: FirestorePermissionError) => {
+      // Set error in state to trigger a re-render.
+      setError(error);
     };
 
-    errorEmitter.on("permission-error", handlePermissionError);
+    // The typed emitter will enforce that the callback for 'permission-error'
+    // matches the expected payload type (FirestorePermissionError).
+    errorEmitter.on('permission-error', handleError);
 
+    // Unsubscribe on unmount to prevent memory leaks.
     return () => {
-      errorEmitter.off("permission-error", handlePermissionError);
+      errorEmitter.off('permission-error', handleError);
     };
-  }, [toast]);
+  }, []);
 
+  // On re-render, if an error exists in state, throw it.
+  if (error) {
+    throw error;
+  }
+
+  // This component renders nothing.
   return null;
 }
-
-    

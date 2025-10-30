@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "Visit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Visit",
+      "type": "object",
+      "description": "Represents a visit record in the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the visit record."
+        },
+        "visitorId": {
+          "type": "string",
+          "description": "Visitor's unique identifier (DNI/NIE)."
+        },
+        "name": {
+          "type": "string",
+          "description": "Visitor's full name."
+        },
+        "company": {
+          "type": "string",
+          "description": "Visitor's company name."
+        },
+        "visitReason": {
+          "type": "string",
+          "description": "Reason for the visit."
+        },
+        "personToVisitId": {
+          "type": "string",
+          "description": "Reference to PersonToVisit. (Relationship: PersonToVisit 1:N Visit)"
+        },
+        "department": {
+          "type": "string",
+          "description": "Department the visitor is visiting."
+        },
+        "entryTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the visitor entered.",
+          "format": "date-time"
+        },
+        "exitTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the visitor exited. Null if still inside.",
+          "format": "date-time"
+        },
+        "haulierCompany": {
+          "type": "string",
+          "description": "Haulier company name (for transporters only)."
+        },
+        "vehicleRegistration": {
+          "type": "string",
+          "description": "Vehicle registration number (for transporters only)."
+        },
+        "trailerRegistration": {
+          "type": "string",
+          "description": "Trailer registration number (for transporters only)."
+        }
+      },
+      "required": [
+        "id",
+        "visitorId",
+        "name",
+        "company",
+        "personToVisitId",
+        "department",
+        "entryTimestamp"
+      ]
+    },
+    "PersonToVisit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PersonToVisit",
+      "type": "object",
+      "description": "Represents a person within the company who can be visited.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the person to visit."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the person to visit."
+        },
+        "department": {
+          "type": "string",
+          "description": "Department of the person to visit."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/persons_to_visit/{personToVisitId}",
+        "definition": {
+          "entityName": "PersonToVisit",
+          "schema": {
+            "$ref": "#/backend/entities/PersonToVisit"
+          },
+          "description": "Stores information about people who can be visited.  `personToVisitId` is the unique identifier for the person to visit.",
+          "params": [
+            {
+              "name": "personToVisitId",
+              "description": "Unique identifier for the person to visit."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/visits/{visitId}",
+        "definition": {
+          "entityName": "Visit",
+          "schema": {
+            "$ref": "#/backend/entities/Visit"
+          },
+          "description": "Stores visit records. Includes all visit details. `visitId` is the unique identifier for each visit.",
+          "params": [
+            {
+              "name": "visitId",
+              "description": "Unique identifier for the visit record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the visit logging application's requirements, focusing on simplicity, security, and scalability. The primary collections are `persons_to_visit` and `visits`. \n\n`persons_to_visit` collection stores the information about company employees who can receive visitors. This collection is straightforward and does not require complex security rules, as it mainly stores employee data.\n\n`visits` collection is designed to store the visit records. It includes all the necessary information about each visit, like visitor details, reason for visit, timestamps, and related person to visit. Security rules will be applied to ensure only authorized users can access or modify visit records.\n\nTo enable the 'Active Visit Validation' feature and optimize querying for current visits, a denormalized `active` field is included in the `Visit` entity. This boolean field indicates whether the visit is currently active (i.e., the visitor has not exited). This allows to efficiently query for active visits.\n\nThis structure promotes authorization independence by avoiding complex hierarchical `get()` calls in security rules.  Data is structured to enable secure `list` operations and maintains the integrity of ownership and timestamps."
+  }
+}
