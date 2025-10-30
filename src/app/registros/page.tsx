@@ -8,19 +8,15 @@ import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useConfig } from "@/hooks/use-config";
 import { useVisitsContext } from "@/hooks/use-visits-context";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function RecordsPage() {
   const router = useRouter();
-  const { exportToCSV, fetchVisits } = useVisitsContext();
+  const { exportToCSV } = useVisitsContext();
   const { getReportRecipients } = useConfig();
   const { t } = useTranslation();
   
-  useEffect(() => {
-    fetchVisits();
-  }, [fetchVisits]);
-
   const handleExport = useCallback(() => {
     const recipients = getReportRecipients();
     exportToCSV('registros.csv', recipients);

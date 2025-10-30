@@ -28,7 +28,7 @@ export default function RootLayout({
               <VisitsProvider>
                 <Header />
                 <main className="flex-grow">
-                {children}
+                  {children}
                 </main>
                 <Toaster />
               </VisitsProvider>
