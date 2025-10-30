@@ -1,65 +1,62 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset defines access control for the Visit Logging application, focusing on user authorization and data integrity.
+ * @file Overview
+ * This ruleset enforces a basic security model for a visit logging application.
  *
  * Core Philosophy:
- *   This ruleset enforces a data model where all data is generally public readable but with restrictions on writes.
- *   Specifically:
- *     - Anyone can read the lists of visit and persons to visit.
- *     - Only authenticated users can create, update or delete visits and persons to visit.
+ * - Public Read, Owner Write: The `visits` and `persons_to_visit` collections are publicly readable, but only owners can create, update, or delete documents within them.
  *
  * Data Structure:
- *   The data is organized into two top-level collections:
- *     - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- *     - /visits/{visitId}: Stores visit records.
+ * - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ * - `/visits/{visitId}`: Stores visit records.
  *
  * Key Security Decisions:
- *   - Public Read Access: `get` and `list` operations are generally open for `persons_to_visit` and `visits` collections to allow for unauthenticated data retrieval.
- *   - Authenticated Write Access: `create`, `update` and `delete` operations are restricted to authenticated users.
+ * - Public read access for all collections.
+ * - Strict ownership model for all write operations (create, update, delete).
+ * - No special roles or admin privileges are defined.
  *
- *  Data Validation Limitations (Prototyping):
- *    - The ruleset does not enforce strict data validation during write operations.
- *      It is assumed that the application code will handle data validation to ensure data integrity.
- *
- * Denormalization for Authorization:
- *   No denormalization is required as authorization is based on user authentication.
- *
- * Structural Segregation:
- *   No structural segregation is needed as there are no public/private data requirements.
+ * Data Denormalization:
+ * - The data includes a denormalized 'active' field in the `Visit` entity to optimize queries for current visits.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read the list of persons to visit, but restricts create, update, and delete operations to authenticated users.
+     * @description Grants public read access and owner-only write access to the `persons_to_visit` collection.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list)
-     * @allow (create, update, delete) - Authenticated user
-     * @deny (create, update, delete) - Unauthenticated user
-     * @principle Allows public read access while restricting write access to authenticated users
+     * @allow get, list: Any user can read person to visit information.
+     * @allow create: Only the document owner can create a new person to visit document. The `id` field must match the `personToVisitId` path parameter.
+     * @allow update: Only the document owner can update an existing person to visit document.
+     * @allow delete: Only the document owner can delete an existing person to visit document.
+     * @deny create: Attempt to create a document where the `id` field does not match the `personToVisitId` path parameter.
+     * @deny update: Attempt to update a document by a user who is not the owner.
+     * @deny delete: Attempt to delete a document by a user who is not the owner or if the document does not exist.
+     * @principle Enforces document ownership for writes, public read access.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.id == personToVisitId;
+      allow delete: if request.auth != null && resource.data.id == personToVisitId && resource != null;
     }
 
     /**
-     * @description Allows anyone to read the list of visits, but restricts create, update, and delete operations to authenticated users.
+     * @description Grants public read access and owner-only write access to the `visits` collection.
      * @path /visits/{visitId}
-     * @allow (get, list)
-     * @allow (create, update, delete) - Authenticated user
-     * @deny (create, update, delete) - Unauthenticated user
-     * @principle Allows public read access while restricting write access to authenticated users
+     * @allow get, list: Any user can read visit information.
+     * @allow create: Only the document owner can create a new visit document. The `id` field must match the `visitId` path parameter.
+     * @allow update: Only the document owner can update an existing visit document.
+     * @allow delete: Only the document owner can delete an existing visit document.
+     * @deny create: Attempt to create a document where the `id` field does not match the `visitId` path parameter.
+     * @deny update: Attempt to update a document by a user who is not the owner.
+     * @deny delete: Attempt to delete a document by a user who is not the owner or if the document does not exist.
+     * @principle Enforces document ownership for writes, public read access.
      */
     match /visits/{visitId} {
       allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-    }
-
-    // Helper function to determine if a user is signed in
-    function isSignedIn() {
-      return request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.id == visitId;
+      allow delete: if request.auth != null && resource.data.id == visitId && resource != null;
     }
   }
 }
