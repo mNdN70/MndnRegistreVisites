@@ -1,34 +1,15 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow public read access to configuration collections for app functionality.
-    // This is necessary for parts of the app that need to display lists of
-    // employees or departments without requiring user authentication.
-    // Writes are restricted to prevent unauthorized modifications.
-    match /departments/{departmentId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Only authenticated users (e.g., from admin panel) can write
-    }
-
-    match /employees/{employeeId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Only authenticated users can write
-    }
-
-    // Allow public read on users for the custom login flow.
-    // This is required to check credentials. Writes are restricted.
+    // Allow public read access on the users collection for login purposes.
+    // This is necessary because the login form queries the collection to verify credentials.
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read;
     }
 
-    // Visits can be created by anyone (public forms), but should only be
-    // readable/updatable by authenticated users from the admin panel.
-    match /visits/{visitId} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null;
+    // Default deny all other reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
