@@ -1,75 +1,49 @@
 /**
- * @fileOverview Firestore Security Rules for the Visit Logging Application.
- *
- * Core Philosophy:
- * This ruleset prioritizes simplicity and security, focusing on straightforward
- * access control for two main collections: `persons_to_visit` and `visits`.
+ * @file Overview
+ * This ruleset enforces a basic security model that allows read access to all documents
+ * but restricts write access.
  *
  * Data Structure:
- * - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
- * - `/visits/{visitId}`: Stores visit records.
+ * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
+ * - /visits/{visitId}: Stores visit records.
  *
  * Key Security Decisions:
- * - The `persons_to_visit` collection is considered public read.
- * - The `visits` collection allows public read. Writes are only allowed if the user
- *   provides valid data, including a matching ID and maintains immutability of the ID field.
+ * - Public read access is granted to both collections for prototyping.
+ * - All write operations (create, update, delete) are forbidden to provide an initial secure state.
+ * - No complex validation is performed during this prototyping stage.
  *
  * Denormalization for Authorization:
- *   N/A
+ *   N/A - Authorization checks are not implemented in this prototype.
  *
  * Structural Segregation:
- *   N/A
+ *   N/A - No segregation of public and private data is implemented in this prototype.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows read-only access to person to visit records.
+     * @description Allows read access to person to visit records, but denies all write access.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Any user can read person to visit data.
-     * @deny (create, update, delete) No user can create, update, or delete person to visit data via client.
-     * @principle Public read-only access.
+     * @allow (get, list) - Any user can read person to visit records.
+     * @deny (create, update, delete) - No user can create, update, or delete person to visit records.
+     * @principle Allows public read access for prototyping, while denying all writes for security.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Manages access control for visit records. Allows public read, but restricts write access.
+     * @description Allows read access to visit records, but denies all write access.
      * @path /visits/{visitId}
-     * @allow (get, list) Any user can read visit data.
-     * @allow (create) Any signed-in user can create a new visit record if the provided ID matches the document ID.
-     * @allow (update) Any signed-in user can update an existing visit record if the existing ID matches the new ID
-     * @allow (delete) Any signed-in user can delete an existing visit record if the ID matches the document ID.
-     * @deny (create) A create operation will be rejected if the ID does not match the document ID.
-     * @deny (update) An update operation will be rejected if the ID does not match the existing ID.
-     * @deny (delete) A delete operation will be rejected if the visit document does not exist.
-     * @principle Public read, restricted writes based on matching ID.
+     * @allow (get, list) - Any user can read visit records.
+     * @deny (create, update, delete) - No user can create, update, or delete visit records.
+     * @principle Allows public read access for prototyping, while denying all writes for security.
      */
     match /visits/{visitId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isValidNewVisit(visitId);
-      allow update: if isExistingVisit(visitId);
-      allow delete: if isExistingVisit(visitId);
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isValidNewVisit(visitId) {
-        return isSignedIn() && request.resource.data.id == visitId;
-    }
-
-    function isExistingVisit(visitId) {
-        return isSignedIn() && resource.data.id == visitId && resource != null;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
   }
 }

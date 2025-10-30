@@ -17,13 +17,12 @@ import {
   addDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { errorEmitter } from '@/lib/error-emitter';
-import { FirestorePermissionError } from '@/lib/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { INITIAL_DEPARTMENTS, INITIAL_EMPLOYEES } from '@/lib/constants';
 
 const DEPARTMENTS_COLLECTION = 'departments';
 const EMPLOYEES_COLLECTION = 'employees';
-const USERS_COLLECTION = 'users';
 
 export interface Employee {
   id?: string;
@@ -43,14 +42,11 @@ interface ConfigContextType {
     loading: boolean;
     departments: string[];
     employees: Employee[];
-    users: User[];
     addDepartment: (department: string) => Promise<void>;
     removeDepartment: (departmentName: string) => Promise<void>;
     addEmployee: (employee: Omit<Employee, 'id'>) => Promise<void>;
     removeEmployee: (employeeName: string) => Promise<void>;
     updateEmployee: (employeeId: string, employeeData: Omit<Employee, 'id'>) => Promise<void>;
-    addUser: (user: User) => Promise<void>;
-    removeUser: (userId: string) => Promise<void>;
     fetchConfig: () => Promise<void>;
     getReportRecipients: () => string[];
 }
@@ -60,7 +56,6 @@ export const ConfigContext = createContext<ConfigContextType | undefined>(undefi
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const [departments, setDepartments] = useState<string[]>(INITIAL_DEPARTMENTS.sort());
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES.sort((a,b) => a.name.localeCompare(b.name)));
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -70,34 +65,22 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     try {
       setDepartments(INITIAL_DEPARTMENTS.sort());
       setEmployees(INITIAL_EMPLOYEES.sort((a,b) => a.name.localeCompare(b.name)));
-      
-      const usersQuery = query(collection(db, USERS_COLLECTION), orderBy('username'));
-
-      const usersSnapshot = await getDocs(usersQuery).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({ path: USERS_COLLECTION, operation: 'list' });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-      
-      setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, username: doc.data().username } as User)).sort((a,b) => a.username.localeCompare(b.username)));
 
     } catch (error) {
-      if (!(error instanceof FirestorePermissionError)) {
         console.error('Error fetching config from Firestore', error);
         toast({
             title: 'Error',
             description: t('error_loading_config'),
             variant: 'destructive',
         });
-      }
     } finally {
       setLoading(false);
     }
   }, [toast, t]);
 
   useEffect(() => {
-    setLoading(false);
-  }, []);
+    fetchConfig();
+  }, [fetchConfig]);
 
   const addDepartment = useCallback(async (department: string) => {
     if (departments.map(d => d.toLowerCase()).includes(department.toLowerCase())) {
@@ -217,48 +200,6 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         errorEmitter.emit('permission-error', permissionError);
       });
   }, [toast]);
-
-
-  const addUser = useCallback(async (user: User) => {
-    if (users.find(u => u.username.toLowerCase() === user.username.toLowerCase())) {
-     toast({ title: t('duplicated_user'), variant: 'destructive' });
-     return;
-   }
-
-   addDoc(collection(db, USERS_COLLECTION), user)
-    .then((newDocRef) => {
-      setUsers(prev => [...prev, {id: newDocRef.id, username: user.username }].sort((a,b) => a.username.localeCompare(b.username)));
-      toast({ title: t('user_added') });
-    })
-    .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: USERS_COLLECTION,
-            operation: 'create',
-            requestResourceData: user
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
- }, [users, toast, t]);
-
- const removeUser = useCallback(async (userId: string) => {
-    if(users.length <= 1) {
-      toast({ title: t('cannot_delete_last_user'), variant: 'destructive' });
-      return;
-    }
-    const docRef = doc(db, USERS_COLLECTION, userId);
-    deleteDoc(docRef)
-      .then(() => {
-        setUsers(prev => prev.filter(u => u.id !== userId));
-        toast({ title: t('user_deleted') });
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: docRef.path,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
- }, [users.length, toast, t]);
  
  const getReportRecipients = useCallback(() => {
     return employees
@@ -268,10 +209,8 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <ConfigContext.Provider value={{ loading, departments, employees, users, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployee, addUser, removeUser, fetchConfig, getReportRecipients }}>
+    <ConfigContext.Provider value={{ loading, departments, employees, addDepartment, removeDepartment, addEmployee, removeEmployee, updateEmployee, fetchConfig, getReportRecipients }}>
       {children}
     </ConfigContext.Provider>
   );
 };
-
-    

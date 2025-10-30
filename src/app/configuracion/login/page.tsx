@@ -12,7 +12,7 @@ function LoginPageContent() {
         <CardHeader>
           <CardTitle className="font-headline text-4xl text-center">Accés a Configuració</CardTitle>
           <CardDescription className="text-center">
-            Introduïu les vostres credencials per continuar.
+            Introduïu les vostres credencials per continuar. Per crear un usuari, utilitzeu la consola de Firebase.
           </CardDescription>
         </CardHeader>
         <CardContent>

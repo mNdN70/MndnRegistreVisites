@@ -1,10 +1,10 @@
 "use client";
 
-import { useConfig, Employee } from "@/hooks/use-config";
+import { Employee, useConfig } from "@/hooks/use-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, UserPlus, KeyRound, LogOut, Mail, Pencil } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogOut, Mail, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +29,8 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
 
 const employeeSchema = z.object({
   id: z.string().optional(),
@@ -43,17 +45,15 @@ type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export default function ConfigPanel() {
   const router = useRouter();
+  const auth = useAuth();
   const {
     departments,
     employees,
-    users,
     addDepartment,
     removeDepartment,
     addEmployee,
     removeEmployee,
     updateEmployee,
-    addUser,
-    removeUser,
     loading,
   } = useConfig();
 
@@ -62,8 +62,6 @@ export default function ConfigPanel() {
   const [newEmployeeDept, setNewEmployeeDept] = useState("");
   const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
   const [newEmployeeReceivesReports, setNewEmployeeReceivesReports] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newPassword, setNewPassword] = useState("");
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -146,19 +144,13 @@ export default function ConfigPanel() {
     }
   };
   
-  const handleAddUser = () => {
-    if(newUsername.trim() && newPassword.trim()){
-      addUser({ username: newUsername.trim(), password: newPassword.trim() });
-      setNewUsername("");
-      setNewPassword("");
-    }
-  };
-
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('auth_token');
-    }
-    router.push('/');
+    signOut(auth).then(() => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('auth_token');
+        }
+        router.push('/');
+    });
   };
 
   const handleEditEmployee = (employee: Employee) => {
@@ -332,44 +324,6 @@ export default function ConfigPanel() {
         </Card>
       </div>
 
-       <Card>
-          <CardHeader>
-            <CardTitle>Usuaris</CardTitle>
-            <CardDescription>Gestionar els usuaris amb accés al panell de configuració.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="Usuari"
-                className="flex-grow"
-              />
-              <Input
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Contrasenya"
-                type="password"
-                className="flex-grow"
-              />
-              <Button onClick={handleAddUser} className="w-full sm:w-auto">
-                <KeyRound className="mr-2 h-4 w-4"/> Afegir Usuari
-              </Button>
-            </div>
-            <ul className="space-y-2 max-h-60 overflow-y-auto">
-              {users.map((user) => (
-                <li key={user.id} className="flex justify-between items-center p-2 border rounded-md">
-                  <div>
-                    <p>{user.username}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeUser(user.id!)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
         <div className="flex justify-end">
             <Button onClick={handleLogout} variant="outline">
                 <LogOut className="mr-2 h-4 w-4" />

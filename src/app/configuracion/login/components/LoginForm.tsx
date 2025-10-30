@@ -17,13 +17,12 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { errorEmitter } from "@/lib/error-emitter";
-import { FirestorePermissionError } from "@/lib/errors";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth } from "@/firebase";
+import { FirebaseError } from "firebase/app";
 
 const formSchema = z.object({
-  username: z.string().min(1, 'L\'usuari és obligatori.'),
+  email: z.string().email('L\'email no és vàlid.'),
   password: z.string().min(1, 'La contrasenya és obligatòria.'),
 });
 
@@ -32,35 +31,21 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-
-    try {
-      const q = query(
-        collection(db, "users"),
-        where("username", "==", values.username),
-        where("password", "==", values.password)
-      );
-      const querySnapshot = await getDocs(q).catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'users',
-          operation: 'list',
-          requestResourceData: { where: `username == ${values.username}` }
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
-
-      if (!querySnapshot.empty) {
+    
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .then((userCredential) => {
         toast({ title: 'Accés concedit' });
         
         if (typeof window !== 'undefined') {
@@ -69,21 +54,22 @@ export default function LoginForm() {
 
         const redirectTo = searchParams.get('redirectTo') || '/configuracion/panel';
         router.push(redirectTo);
-      } else {
+      })
+      .catch((error: FirebaseError) => {
+        let description = 'L\'usuari o la contrasenya són incorrectes. Si us plau, torneu-ho a provar.';
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          description = 'L\'usuari o la contrasenya són incorrectes.';
+        } else if (error.code === 'auth/invalid-email') {
+          description = 'El format del correu electrònic no és vàlid.';
+        }
+
         toast({
           title: 'Error d\'accés',
-          description: 'L\'usuari o la contrasenya són incorrectes. Si us plau, torneu-ho a provar.',
+          description: description,
           variant: "destructive",
         });
         setIsSubmitting(false);
-      }
-    } catch (error) {
-       if (!(error instanceof FirestorePermissionError)) {
-        console.error("Login error:", error);
-        toast({ title: "Error", description: 'No s\'ha pogut iniciar sessió.', variant: "destructive" });
-      }
-      setIsSubmitting(false);
-    }
+      });
   }
 
   return (
@@ -91,12 +77,12 @@ export default function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="username"
+          name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Usuari</FormLabel>
+              <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='El vostre usuari' {...field} />
+                <Input placeholder='El vostre correu electrònic' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -128,5 +114,3 @@ export default function LoginForm() {
     </Form>
   );
 }
-
-    
