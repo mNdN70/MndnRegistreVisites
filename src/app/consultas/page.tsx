@@ -4,18 +4,18 @@ import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ActiveVisitsTable from "@/app/activos/components/ActiveVisitsTable";
 import { useTranslation } from "@/hooks/use-translation";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
-import { useVisitsContext } from "@/hooks/use-visits-context";
+import { VisitsContext } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
 
 export default function ConsultasPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { exportActiveVisitsToCSV } = useVisitsContext();
+  const visitsContext = useContext(VisitsContext);
   const { getReportRecipients } = useConfig();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -29,6 +29,11 @@ export default function ConsultasPage() {
         }
     }
   }, [router]);
+
+  if (!visitsContext) {
+    throw new Error("VisitsContext must be used within a VisitsProvider");
+  }
+  const { exportActiveVisitsToCSV } = visitsContext;
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {

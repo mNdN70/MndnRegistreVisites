@@ -1,6 +1,6 @@
 "use client";
 
-import { useVisitsContext } from "@/hooks/use-visits-context";
+import { VisitsContext } from "@/contexts/VisitsContext";
 import {
   Table,
   TableBody,
@@ -14,12 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
 import { es, ca, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/use-translation";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function ActiveVisitsTable() {
-  const { getActiveVisits, loading, fetchVisits } = useVisitsContext();
+  const context = useContext(VisitsContext);
+  
+  if (!context) {
+    throw new Error("useVisitsContext must be used within a VisitsProvider");
+  }
+
+  const { getActiveVisits, loading, fetchVisits } = context;
   
   useEffect(() => {
     fetchVisits();

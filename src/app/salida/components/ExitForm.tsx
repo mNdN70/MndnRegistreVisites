@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useVisitsContext } from "@/hooks/use-visits-context";
-import { useState } from "react";
+import { VisitsContext } from "@/contexts/VisitsContext";
+import { useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
@@ -25,10 +25,15 @@ const getFormSchema = (t: (key: string) => string) => z.object({
 
 export default function ExitForm() {
   const router = useRouter();
-  const { registerExit } = useVisitsContext();
+  const visitsContext = useContext(VisitsContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useTranslation();
   const formSchema = getFormSchema(t);
+
+  if (!visitsContext) {
+    throw new Error("useVisitsContext must be used within a VisitsProvider");
+  }
+  const { registerExit } = visitsContext;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

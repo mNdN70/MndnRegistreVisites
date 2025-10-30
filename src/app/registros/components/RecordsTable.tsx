@@ -1,6 +1,6 @@
 "use client";
 
-import { useVisitsContext } from "@/hooks/use-visits-context";
+import { VisitsContext } from "@/contexts/VisitsContext";
 import {
   Table,
   TableBody,
@@ -19,16 +19,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/use-translation";
+import { useContext } from "react";
 
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function RecordsTable() {
+  const context = useContext(VisitsContext);
+
+  if (!context) {
+    throw new Error("useVisitsContext must be used within a VisitsProvider");
+  }
+
   const { 
     loading, 
     date, 
     setDate, 
     getFilteredVisits 
-  } = useVisitsContext();
+  } = context;
 
   const filteredVisits = getFilteredVisits();
   const { t, language } = useTranslation();
@@ -47,7 +54,7 @@ export default function RecordsTable() {
   const renderDateLabel = () => {
     if (date?.from) {
       if (date.to) {
-        if (isToday(date.from) && isToday(date.to)) {
+        if (isToday(date.from) && date.from.getTime() === date.to.getTime()) {
           return t('today_date_label');
         }
         return (

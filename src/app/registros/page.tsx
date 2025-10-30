@@ -7,16 +7,22 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useConfig } from "@/hooks/use-config";
-import { useVisitsContext } from "@/hooks/use-visits-context";
-import { useCallback } from "react";
+import { VisitsContext } from "@/contexts/VisitsContext";
+import { useCallback, useContext } from "react";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function RecordsPage() {
   const router = useRouter();
-  const { exportToCSV } = useVisitsContext();
+  const visitsContext = useContext(VisitsContext);
   const { getReportRecipients } = useConfig();
   const { t } = useTranslation();
   
+  if (!visitsContext) {
+    throw new Error("VisitsContext must be used within a VisitsProvider");
+  }
+
+  const { exportToCSV } = visitsContext;
+
   const handleExport = useCallback(() => {
     const recipients = getReportRecipients();
     exportToCSV('registros.csv', recipients);

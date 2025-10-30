@@ -23,9 +23,9 @@ import {
   SelectPortal,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useVisitsContext } from "@/hooks/use-visits-context";
+import { VisitsContext } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -47,11 +47,16 @@ const getFormSchema = (t: (key: string) => string) => z.object({
 
 export default function EntryForm() {
   const router = useRouter();
-  const { addVisit } = useVisitsContext();
+  const visitsContext = useContext(VisitsContext);
   const { employees, loading: configLoading } = useConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const { t } = useTranslation();
+  
+  if (!visitsContext) {
+    throw new Error("useVisitsContext must be used within a VisitsProvider");
+  }
+  const { addVisit } = visitsContext;
   
   const formSchema = getFormSchema(t);
 
