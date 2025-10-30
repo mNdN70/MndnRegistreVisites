@@ -2,37 +2,29 @@
  * @fileoverview Firestore Security Rules for the visit logging application.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and security, focusing on protecting
- * visit records and person-to-visit data. It enforces strict ownership and
- * authorization to ensure data integrity and privacy.
+ * This ruleset prioritizes secure data access based on a combination of public read access and owner-only write access.
  *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about company
- *   employees who can receive visitors.
- * - /visits/{visitId}: Stores visit records, including visitor details, visit
- *   reason, and timestamps.
+ * The database consists of two top-level collections: `persons_to_visit` and `visits`.
  *
  * Key Security Decisions:
- * - No user listing is allowed for either collection.
- * - The ruleset does not enforce a specific data schema beyond authorization
- *   fields, allowing for rapid iteration during prototyping.
+ * - The `persons_to_visit` collection is publicly readable, while writes are disallowed.
+ * - The `visits` collection allows public reads but restricts writes to the owner. Ownership is determined by matching `request.auth.uid` against the `authorId` field within the document.
+ * - No user listing is allowed.
+ *
+ * Denormalization for Authorization:
+ * The `visits` collection relies on an `authorId` field to determine ownership for write operations. This avoids the need for complex `get()` calls to other collections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description: Manages access control for the `persons_to_visit` collection.
-     * @path: /persons_to_visit/{personToVisitId}
-     * @allow: (get) Any user can retrieve information about a person to visit.
-     * @allow: (list) Any user can list people to visit.
-     * @allow: (create) No one can create a person to visit, probably made by backend.
-     * @allow: (update) No one can update a person to visit, probably made by backend.
-     * @allow: (delete) No one can delete a person to visit, probably made by backend.
-     * @deny: (create) Unauthorized users cannot create person to visit entries.
-     * @deny: (update) Unauthorized users cannot modify person to visit entries.
-     * @deny: (delete) Unauthorized users cannot delete person to visit entries.
-     * @principle: Grants public read access while restricting all write access.
+     * @description Allows public read access to person to visit information. Writes are disallowed.
+     * @path /persons_to_visit/{personToVisitId}
+     * @allow get, list: Any user can read person to visit details.
+     * @deny create, update, delete: No user can create, update, or delete person to visit details.
+     * @principle Public read access, no write access.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get, list: if true;
@@ -40,22 +32,22 @@ service cloud.firestore {
     }
 
     /**
-     * @description: Controls access to the `visits` collection, ensuring only
-     *               authorized users can create, modify, or delete visit records.
-     * @path: /visits/{visitId}
-     * @allow: (get) Any user can read visit information.
-     * @allow: (list) Any user can list visits.
-     * @allow: (create) No one can create a visit.
-     * @allow: (update) No one can update a visit.
-     * @allow: (delete) No one can delete a visit.
-     * @deny: (create) Unauthorized users are prohibited from creating new visit records.
-     * @deny: (update) Unauthorized users cannot modify existing visit records.
-     * @deny: (delete) Unauthorized users are not allowed to delete visit records.
-     * @principle: Restricts write access to authorized users only, allowing open reads.
+     * @description Allows public read access to visit records, but restricts write access to the owner.
+     * @path /visits/{visitId}
+     * @allow get, list: Any user can read visit records.
+     * @deny create, update, delete: Writes are restricted to the document owner.
+     * @principle Public read with owner-only writes.
      */
     match /visits/{visitId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if request.resource.data.visitorId == request.auth.uid;
+      allow update: if isOwner(resource.data.visitorId);
+      allow delete: if isOwner(resource.data.visitorId);
+    }
+
+    // Helper function to determine if the user is the owner of the document.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
   }
 }
