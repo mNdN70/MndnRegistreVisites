@@ -18,7 +18,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
-import { isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
 import { errorEmitter } from '@/lib/error-emitter';
 import { FirestorePermissionError } from '@/lib/errors';
 
@@ -221,7 +221,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getActiveVisits = useCallback(() => {
-    return visits.filter(v => v.exitTime === null).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
+    return visits.filter(v => v.exitTime === null && isToday(new Date(v.entryTime))).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits]);
   
   const getFilteredVisits = useCallback(() => {
