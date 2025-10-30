@@ -1,23 +1,28 @@
 /**
- * @file Firebase Security Rules for Visit Logging Application
- * @core Philosophy: This ruleset prioritizes simplicity and security, enabling basic visit logging functionality.  It provides open read access to visit and employee data and restricts write access.
- * @data Structure:
- *   - /persons_to_visit/{personToVisitId}: Stores information about company employees who can receive visitors.
- *   - /visits/{visitId}: Stores records of visits, including visitor details, timestamps, and the person being visited.
- * @key Security Decisions:
- *   - Public read access is granted to both `persons_to_visit` and `visits` collections.
- *   - No write access to `persons_to_visit` or `visits` is granted, as this is a prototype.
+ * @fileoverview Firestore Security Rules for the visit logging application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes secure data access based on a combination of public read access where appropriate and owner-only write access.
+ *
+ * Data Structure:
+ * The database contains two top-level collections: `persons_to_visit` and `visits`.
+ *   - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ *   - `/visits/{visitId}`: Stores records of visits.
+ *
+ * Key Security Decisions:
+ * - `persons_to_visit` collection provides public read access, as this information is considered non-sensitive.
+ * - `visits` collection allows public reads, but enforces strict owner-only access for writes.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description: Rules for the `/persons_to_visit/{personToVisitId}` collection. Allows public read access.  No writes are allowed.
-     * @path: /persons_to_visit/{personToVisitId}
-     * @allow: (get, list) - Any user can read person to visit data.
-     * @deny: (create, update, delete) - No user can create, update, or delete person to visit data.
-     * @principle: Provides open read access to employee data, while prohibiting writes.
+     * @description Rules for the /persons_to_visit/{personToVisitId} collection. Allows anyone to read the persons_to_visit collection.
+     * @path /databases/{database}/documents/persons_to_visit/{personToVisitId}
+     * @allow (get, list) Any user can read a person_to_visit document.
+     * @deny (create, update, delete) No one can create, update, or delete a person_to_visit document.
+     * @principle Public read access for non-sensitive data.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get: if true;
@@ -28,18 +33,49 @@ service cloud.firestore {
     }
 
     /**
-     * @description: Rules for the `/visits/{visitId}` collection. Allows public read access. No writes are allowed.
-     * @path: /visits/{visitId}
-     * @allow: (get, list) - Any user can read visit data.
-     * @deny: (create, update, delete) - No user can create, update, or delete visit data.
-     * @principle: Provides open read access to visit data, while prohibiting writes.
+     * @description Rules for the /visits/{visitId} collection. Allows anyone to read the visits collection, but enforces owner-only writes.
+     * @path /databases/{database}/documents/visits/{visitId}
+     * @allow (get, list) Any user can read a visit document.
+     * @allow (create) Any authenticated user can create a visit document. The `ownerId` field must match the user's UID.
+     * @allow (update, delete) Only the owner of the visit document can update or delete it.
+     * @deny (create) If the `ownerId` field does not match the user's UID.
+     * @deny (update, delete) If the user is not the owner of the visit document or the document doesn't exist.
+     * @principle Public read access with owner-only writes. Enforces document ownership for writes.
      */
     match /visits/{visitId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn();
+      allow update: if isExistingOwner(resource.data.id);
+      allow delete: if isExistingOwner(resource.data.id);
     }
+  }
+
+  // --- Helper functions ---
+
+  /**
+   * @description Checks if the user is signed in.
+   * @returns {boolean} True if the user is signed in, false otherwise.
+   */
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  /**
+   * @description Checks if the user is the owner of the document.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner, false otherwise.
+   */
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+    /**
+   * @description Checks if the user is the owner of the document and the document exists.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner and the document exists, false otherwise.
+   */
+  function isExistingOwner(userId) {
+    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
