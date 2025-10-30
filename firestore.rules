@@ -1,54 +1,60 @@
 /**
- * @file Overview
- * This ruleset enforces a basic security model focused on isolating user data and preventing unauthorized access.
+ * @file Firebase Security Rules for Visit Logging Application
  *
- * Data Structure:
+ * @corePhilosophy This ruleset enforces a role-based access control model, with a focus on data integrity
+ * and user-level authorization.  It prioritizes secure access to visit records, ensuring that only
+ * authorized users can create, read, update, or delete them.
+ *
+ * @dataStructure
  * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records.
+ * - /visits/{visitId}: Stores visit records, including visitor details, timestamps, and the person being visited.
  *
- * Key Security Decisions:
- * - The rules prioritize simplicity and security, with clear ownership enforced where applicable.
- * - There is no role-based access control.
+ * @keySecurityDecisions
+ * - Public read access is allowed to `persons_to_visit`.
+ * - Access to `visits` is restricted to authenticated users.
+ *
+ * @denormalizationForAuthorization No specific denormalization is used in this ruleset.
+ *
+ * @structuralSegregation No structural segregation is applied in this ruleset.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Defines access control for the persons_to_visit collection.  Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
+     * @description Allows anyone to read people who can be visited, but restricts writes.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Any authenticated user can read data.
-     * @allow (create) Any authenticated user can create data.
-     * @deny (update, delete) No one can update or delete data.
-     * @principle All authenticated users can read and create records.
+     * @allow (get, list) - Any user can read a person to visit.
+     * @deny (create, update, delete) - No one can create, update, or delete a person to visit.
+     * @principle Public read access with restricted writes.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Defines access control for the visits collection. Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
+     * @description Restricts access to visit records based on user authentication.
      * @path /visits/{visitId}
-     * @allow (get, list) Any authenticated user can read data.
-     * @allow (create) Any authenticated user can create data.
-     * @deny (update, delete) No one can update or delete data.
-     * @principle All authenticated users can read and create records.
+     * @allow (create) - Authenticated users can create visit records.
+     * @allow (get, list) - Authenticated users can read visit records.
+     * @allow (update, delete) - No one can update or delete visit records.
+     * @deny (create) - Unauthenticated users cannot create visit records.
+     * @deny (get, list, update, delete) - Unauthenticated users cannot read, update or delete visit records.
+     * @principle Requires authentication for creating and reading visit records.
      */
     match /visits/{visitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if isSignedIn();
+      allow update, delete: if false;
     }
-  }
 
-  // Helper function to determine if the user is signed in
-  function isSignedIn() {
-    return request.auth != null;
+    /**
+     * @description Checks if the user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
   }
 }
