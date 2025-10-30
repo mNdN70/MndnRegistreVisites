@@ -1,50 +1,72 @@
 /**
- * @fileOverview Firestore Security Rules for the visit logging application.
- *
- * Core Philosophy:
- * This ruleset prioritizes secure data access based on a combination of factors:
- *  - Granular permissions for `create`, `read`, `update`, and `delete` operations.
- *  - Ownership-based access control for user-specific data.
- *
- * Data Structure:
- * The Firestore database is structured with the following top-level collections:
- *  - `/persons_to_visit/{personToVisitId}`: Stores information about company employees who can receive visitors.
- *  - `/visits/{visitId}`: Stores records of visits, including visitor details and timestamps.
- *
- * Key Security Decisions:
- *  - All write operations require authentication.
- *  - Read access to `persons_to_visit` is public.
- *  - Read and Write access to `visits` is denied for all users, unless implemented (TODO).
- *
- * Denormalization for Authorization:
- *  - The rules leverage the structure of the data to avoid costly `get()` operations.
+ * @file Firebase Security Rules for Visit Management Application
+ * @core_philosophy This ruleset enforces a strict data access model, focusing on securing visit records and person-to-visit data.  The design prioritizes simplicity and security, ensuring that only authenticated users can create, read, update, or delete data, with an emphasis on preventing unauthorized access.
+ * @data_structure The database consists of two main collections: `persons_to_visit` and `visits`.
+ *   - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ *   - `/visits/{visitId}`: Stores records of visits, including visitor details, timestamps, and the person being visited.
+ * @key_security_decisions
+ *   - All write operations require user authentication (`isSignedIn()`).
+ *   - There is no concept of ownership for visits. All authenticated users can create, read, update and delete all visit records.
+ *   - The `persons_to_visit` collection is read/write accessible to any logged in user.
+ * @denormalization_for_authorization N/A
+ * @structural_segregation N/A
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for the `/persons_to_visit/{personToVisitId}` collection. Allows read for all users. Writes are denied.
+     * @description Controls access to the persons_to_visit collection. Allows any authenticated user to create, read, update, or delete person to visit data.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) Any user can read data about people to visit.
-     * @deny (create, update, delete) No user can create, update, or delete people to visit through client-side rules.
-     * @principle Public read, no writes allowed.
+     * @allow (create) An authenticated user can create a new person to visit record.
+     * @allow (get) An authenticated user can retrieve a person to visit record.
+     * @allow (list) An authenticated user can list person to visit records.
+     * @allow (update) An authenticated user can update a person to visit record.
+     * @allow (delete) An authenticated user can delete a person to visit record.
+     * @deny (create) An unauthenticated user cannot create a person to visit record.
+     * @deny (get) An unauthenticated user cannot retrieve a person to visit record.
+     * @deny (list) An unauthenticated user cannot list person to visit records.
+     * @deny (update) An unauthenticated user cannot update a person to visit record.
+     * @deny (delete) An unauthenticated user cannot delete a person to visit record.
+     * @principle Allows any authenticated user to manage person to visit records, promoting collaboration.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the `/visits/{visitId}` collection. Denies all read and write operations.
+     * @description Controls access to the visits collection. Allows any authenticated user to create, read, update, or delete visit records.
      * @path /visits/{visitId}
-     * @allow None.
-     * @deny (create, get, list, update, delete) All operations are denied, as rules are unimplemented
-     * @principle Explicitly denies all access.
+     * @allow (create) An authenticated user can create a new visit record.
+     * @allow (get) An authenticated user can retrieve a visit record.
+     * @allow (list) An authenticated user can list visit records.
+     * @allow (update) An authenticated user can update a visit record.
+     * @allow (delete) An authenticated user can delete a visit record.
+     * @deny (create) An unauthenticated user cannot create a visit record.
+     * @deny (get) An unauthenticated user cannot retrieve a visit record.
+     * @deny (list) An unauthenticated user cannot list visit records.
+     * @deny (update) An unauthenticated user cannot update a visit record.
+     * @deny (delete) An unauthenticated user cannot delete a visit record.
+     * @principle Allows any authenticated user to manage visit records, promoting collaboration.
      */
     match /visits/{visitId} {
-        allow get, list: if false;
-        allow create, update, delete: if false; // TODO: Implement visit write rule
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
+
+    // Departments is not present in the data model provided.  Commenting out the rule that prevents creation of departments.
+    //  match /departments/{departmentId} {
+    //    allow create: if false;
+    //    allow get: if false;
+    //    allow list: if false;
+    //    allow update: if false;
+    //    allow delete: if false;
+    //  }
+  }
+
+  // Helper function to determine if a user is signed in
+  function isSignedIn() {
+    return request.auth != null;
   }
 }
