@@ -1,48 +1,61 @@
 /**
- * @file Overview
- * This ruleset enforces a basic security model where any authenticated user can read all data,
- * but write access is completely forbidden in this prototype to prevent accidental data modification.
+ * @fileoverview Firestore Security Rules for the visit logging application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes secure data access based on a flat data structure.
+ * It avoids complex hierarchical lookups for authorization and focuses on
+ * explicit ownership and read access control.
  *
  * Data Structure:
  * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records.
+ * - /visits/{visitId}: Stores visit records with details like visitor info, timestamps, and associated person to visit.
  *
  * Key Security Decisions:
- * - Read access is open to all authenticated users for prototyping purposes.
- * - Write access (create, update, delete) is completely denied to prevent accidental data modification during prototyping.
- * - The prototype does not enforce any data validation beyond requiring authentication for access.
+ * - The `persons_to_visit` collection has public read access.
+ * - Access to the `visits` collection is only allowed to authenticated users. No ownership validation is performed.
+ *   Validation of the `visit` data should be improved.
+ * - Denormalization of `active` field enables efficient queries for active visits.
+ * - User listing is disabled on `visits` to prevent unauthorized data discovery.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows any authenticated user to read information about people to visit.  Writes are forbidden.
+     * @description Grants public read access to the `persons_to_visit` collection. All authenticated users can create data.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) User with any valid auth can read person to visit data.
-     * @deny (create, update, delete) No one can modify person to visit data in this prototype.
-     * @principle Allows open reads for authenticated users during prototyping, but prevents all writes.
+     * @allow get, list: Anyone can read person to visit data.
+     * @allow create: Authenticated users can create person to visit data.
+     * @deny update, delete: Updates and deletes are not allowed.
+     * @principle Public read access for employee data.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Allows any authenticated user to read visit records. Writes are forbidden.
+     * @description Grants authenticated users access to the `visits` collection.
      * @path /visits/{visitId}
-     * @allow (get, list) User with any valid auth can read visit data.
-     * @deny (create, update, delete) No one can modify visit data in this prototype.
-     * @principle Allows open reads for authenticated users during prototyping, but prevents all writes.
+     * @allow get: Authenticated users can get visit data.
+     * @allow create: Authenticated users can create visit data.
+     * @allow update: Authenticated users can update visit data.
+     * @allow delete: Authenticated users can delete visit data.
+     * @deny list: Listing visits is not allowed to prevent unauthorized data discovery.
+     * @principle Authenticated access to visit records.  Improve ownership validation.
      */
     match /visits/{visitId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow get: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+      allow list: if false;
     }
 
     /**
      * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
+     * @return {boolean} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
