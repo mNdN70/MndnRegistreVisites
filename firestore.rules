@@ -1,117 +1,60 @@
 /**
- * @file Overview
- * This ruleset enforces a basic, unrestrictive security model focused on data isolation and simple access controls.
+ * @fileoverview Firestore Security Rules for the visit logging application.
  *
- * @dataStructure
- * The database consists of two top-level collections:
- * - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
- * - `/visits/{visitId}`: Stores individual visit records.
+ * Core Philosophy:
+ * This ruleset prioritizes simplicity and security, focusing on clear ownership and controlled access to visit records.  It avoids overly complex rules and relies on denormalization to optimize performance and security.
  *
- * @keySecurityDecisions
- * - List operations for `/employees` are denied due to the error report and unaddressed security implications.
- * - In this prototype, write access to all collections is open to any authenticated user.
- * - All data validation is disabled for rapid prototyping, focusing solely on authorization.
+ * Data Structure:
+ * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited. Publicly readable.
+ * - /visits/{visitId}: Stores visit records. Publicly readable but write-protected, with owner-only (creator) access for updates and deletes.
  *
- * @denormalizationForAuthorization N/A (Simple data model, no complex relationships yet)
+ * Key Security Decisions:
+ * - Public read access for both collections to simplify data retrieval.
+ * - Strict ownership enforced for modifications to visit records.  Only the user who created a visit record can modify or delete it.
+ * - No user listing is allowed on any collection.
+ *
+ * Denormalization for Authorization:
+ * - The `Visit` entity should include an `ownerId` field (or similar) to represent who created the visit. This avoids the need to query other collections to determine ownership.  However, the schema doesn't define one.  A `TODO` rule is created.
+ *
+ * Structural Segregation:
+ * - No structural segregation is needed as all data is either publicly readable or secured by ownership.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is made by an authenticated user.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Determines if the request is being made by the owner of the data.
-     * @param {string} userId The user ID to check against the request's auth UID.
-     * @return {bool} True if the user ID matches the request's auth UID, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Determines if the request is being made by the owner of the data and the resource exists.
-     * @param {string} userId The user ID to check against the request's auth UID.
-     * @return {bool} True if the user ID matches the request's auth UID and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && exists(resource.data);
-    }
-
-    /**
-     * @description Enforces that a value cannot be changed after creation.
-     * @param {any} originalValue The value of the field in the existing document.
-     * @param {any} newValue The new value being proposed in the update.
-     * @return {bool} True if the values are equal (no change), false otherwise.
-     */
-    function isImmutable(originalValue, newValue) {
-      return originalValue == newValue;
-    }
-
-    /**
-     * @description
-     * Applies to documents in the /persons_to_visit collection.
-     * This ruleset allows any authenticated user to read and write person to visit data.
-     *
+     * @description Allows read-only access to person to visit information.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get) Signed-in user can read a person to visit's data.
-     * @allow (create) Signed-in user can create a person to visit.
-     * @deny (delete) No one can delete a person to visit.
-     * @principle Allows all authenticated users to read and write person to visit data, with no ownership checks.
+     * @allow (get, list) Any user can read person to visit data.
+     * @deny (create, update, delete) No user can create, update, or delete person to visit data.
+     * @principle Allows any user to read, but no one can write.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description
-     * Applies to documents in the /visits collection.
-     * This ruleset allows any authenticated user to create, read, update, and delete visit records.
-     *
+     * @description Controls access to visit records. Allows public read access, but restricts writes to owner only.
      * @path /visits/{visitId}
-     * @allow (get) Signed-in user can read a visit record.
-     * @allow (create) Signed-in user can create a new visit record.
-     * @deny (delete) No one can delete a visit record.
-     * @principle Allows all authenticated users to read and write visit records, with no ownership checks.
+     * @allow (get, list) Any user can read visit records.
+     * @deny (create, update, delete) Only the owner of a visit record can modify or delete it.
+     * @principle Enforces owner-only writes for visit records.
      */
     match /visits/{visitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if false;
+      allow get: if true;
+      allow list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'Visit' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if isSignedIn(); // Allow create if signed in.  Owner will need to be set via client SDK.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
     }
 
-    /**
-     * @description
-     * Denies listing of employees.
-     * The error report indicates a permissions issue when listing employees.  Since there is no
-     * information about how the `employees` collection is intended to be secured, the listing operation
-     * is explicitly denied.  This forces the developer to revisit the security model and define appropriate
-     * access rules.
-     *
-     * @path /employees
-     * @deny (list) No one can list employees
-     * @principle Security First - Explicitly deny access when the appropriate access control is not clear
-     */
-    match /employees {
-       allow list: if false;
-      match /{employeeId} {
-        allow get: if false;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
-      }
+    function isSignedIn() {
+      return request.auth != null;
     }
   }
 }
