@@ -1,61 +1,70 @@
 /**
- * @file Overview
- * This ruleset enforces a basic security model where any authenticated user can read all data,
- * but write access is completely forbidden for all collections in the database.
- * This configuration prioritizes data visibility during the prototyping phase and prevents unauthorized modifications.
+ * @file Firebase Security Rules for Visit Logging Application
  *
- * @dataStructure
+ * Core Philosophy:
+ * This ruleset prioritizes simplicity and security for a visit logging application.
+ * Authenticated users have full read and write access to all data.
+ *
+ * Data Structure:
  * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
  * - /visits/{visitId}: Stores visit records.
  *
- * @keySecurityDecisions
- * - Read access (get, list) is open to all authenticated users.
- * - Write access (create, update, delete) is explicitly denied for all users.
- * - This ruleset does NOT currently enforce any schema validation or complex authorization logic.
- * - This configuration is intended for rapid prototyping and requires refinement for production use.
+ * Key Security Decisions:
+ * - Authenticated users can create, read, update, and delete all data.
+ * - Data validation is not performed in these rules to allow for rapid prototyping.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows any authenticated user to read information about people to visit, but prevents any writes.
+     * @description Allows any authenticated user to create, read, update, and delete person to visit data.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) If the user is signed in, they can read the person's information.
-     * @deny (create, update, delete) No one can create, update, or delete person information.
-     * @principle Read access is open for prototyping; write access is denied to prevent unauthorized changes.
+     * @allow (create) auth.uid: 'user_abc', data: { id: 'person_1', name: 'John Doe' }
+     * @allow (get) auth.uid: 'user_abc'
+     * @allow (list) auth.uid: 'user_abc'
+     * @allow (update) auth.uid: 'user_abc', data: { name: 'Jane Doe' }
+     * @allow (delete) auth.uid: 'user_abc'
+     * @deny (create) !isSignedIn()
+     * @deny (get) !isSignedIn()
+     * @deny (list) !isSignedIn()
+     * @deny (update) !isSignedIn()
+     * @deny (delete) !isSignedIn()
+     * @principle Allows any authenticated user to manage person to visit data.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Allows any authenticated user to read visit records, but prevents any writes.
+     * @description Allows any authenticated user to create, read, update, and delete visit records.
      * @path /visits/{visitId}
-     * @allow (get, list) If the user is signed in, they can read the visit record.
-     * @deny (create, update, delete) No one can create, update, or delete visit records.
-     * @principle Read access is open for prototyping; write access is denied to prevent unauthorized changes.
+     * @allow (create) auth.uid: 'user_abc', data: { id: 'visit_1', visitorId: 'visitor_1', personToVisitId: 'person_1' }
+     * @allow (get) auth.uid: 'user_abc'
+     * @allow (list) auth.uid: 'user_abc'
+     * @allow (update) auth.uid: 'user_abc', data: { exitTimestamp: '2024-01-02T12:00:00Z' }
+     * @allow (delete) auth.uid: 'user_abc'
+     * @deny (create) !isSignedIn()
+     * @deny (get) !isSignedIn()
+     * @deny (list) !isSignedIn()
+     * @deny (update) !isSignedIn()
+     * @deny (delete) !isSignedIn()
+     * @principle Allows any authenticated user to manage visit records.
      */
     match /visits/{visitId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows no access at /employees/{employeeId}
-     * @path /employees/{employeeId}
-     * @allow NONE
-     * @deny ANY
-     * @principle Read and write access is denied to prevent unauthorized changes.
-     */
-    match /employees/{employeeId} {
-      allow get, list: if false;
-      allow create, update, delete: if false;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
   }
 
-  // Helper function to determine if a user is signed in
+  // Helper function to determine if a user is signed in.
   function isSignedIn() {
     return request.auth != null;
   }
