@@ -1,59 +1,54 @@
 /**
- * @file Firebase Security Rules for Visit Management App
- * @core Philosophy: This ruleset implements a hybrid security model. Data in the 'visits' and 'persons_to_visit' collections is generally open for reading. However, writes (create, update, delete) are strictly controlled to ensure data integrity and prevent unauthorized modifications. The 'departments' collection does not exist within our application structure and thus has no write access.
- * @data Structure:
- *   - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- *   - /visits/{visitId}: Stores visit records.
- * @key Security Decisions:
- *   - Read access is generally public, but write access is restricted.
- *   - There are no user-specific subcollections.
+ * @file Overview
+ * This ruleset enforces a basic security model focused on isolating user data and preventing unauthorized access.
+ *
+ * Data Structure:
+ * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
+ * - /visits/{visitId}: Stores visit records.
+ *
+ * Key Security Decisions:
+ * - The rules prioritize simplicity and security, with clear ownership enforced where applicable.
+ * - There is no role-based access control.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants read access to all, but denies all write operations, to the 'departments' collection.
-     * @path /departments/{departmentId}
-     * @allow get, list: Everyone can read the data.
-     * @deny create, update, delete: Nobody can write to this collection.
-     * @principle Collection does not exist in application structure.
-     */
-    match /departments/{departmentId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Grants read access to all, but restricts write access to ensure data integrity for the 'persons_to_visit' collection.
+     * @description Defines access control for the persons_to_visit collection.  Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow get, list: Everyone can read the data.
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Restricts write access to ensure data integrity
+     * @allow (get, list) Any authenticated user can read data.
+     * @allow (create) Any authenticated user can create data.
+     * @deny (update, delete) No one can update or delete data.
+     * @principle All authenticated users can read and create records.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if true;
-      allow create: if false;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Grants read access to all, but restricts write access to ensure data integrity for the 'visits' collection.
+     * @description Defines access control for the visits collection. Any authenticated user can read any record.  Only authenticated users can create a record. Update and delete are disallowed.
      * @path /visits/{visitId}
-     * @allow get, list: Everyone can read the data.
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Restricts write access to ensure data integrity
+     * @allow (get, list) Any authenticated user can read data.
+     * @allow (create) Any authenticated user can create data.
+     * @deny (update, delete) No one can update or delete data.
+     * @principle All authenticated users can read and create records.
      */
     match /visits/{visitId} {
-      allow get, list: if true;
-      allow create: if false;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
     }
+  }
+
+  // Helper function to determine if the user is signed in
+  function isSignedIn() {
+    return request.auth != null;
   }
 }
