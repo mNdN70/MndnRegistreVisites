@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import { errorEmitter } from "@/lib/error-emitter";
+import { FirestorePermissionError } from "@/lib/errors";
 
 const formSchema = z.object({
   username: z.string().min(1, 'L\'usuari és obligatori.'),
@@ -48,7 +50,14 @@ export default function LoginForm() {
         where("username", "==", values.username),
         where("password", "==", values.password)
       );
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(q).catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'users',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
 
       if (!querySnapshot.empty) {
         toast({ title: 'Accés concedit' });
@@ -68,8 +77,10 @@ export default function LoginForm() {
         setIsSubmitting(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast({ title: "Error", description: 'No s\'ha pogut iniciar sessió.', variant: "destructive" });
+       if (!(error instanceof FirestorePermissionError)) {
+        console.error("Login error:", error);
+        toast({ title: "Error", description: 'No s\'ha pogut iniciar sessió.', variant: "destructive" });
+      }
       setIsSubmitting(false);
     }
   }
