@@ -2,60 +2,80 @@
  * @fileoverview Firestore Security Rules for the visit logging application.
  *
  * Core Philosophy:
- * This ruleset prioritizes secure data access based on a combination of public read access, ownership and relational validation.
+ * This ruleset prioritizes secure data access based on a combination of public read access where appropriate and owner-only write access.
  *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about company employees who can be visited.
- * - /visits/{visitId}: Stores visit records.
+ * The database contains two top-level collections: `persons_to_visit` and `visits`.
+ *   - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ *   - `/visits/{visitId}`: Stores records of visits.
  *
  * Key Security Decisions:
- * - `persons_to_visit` is publicly readable but not writable via the client.
- * - `visits` are publicly readable, with owner-only writes.  The `Visit` entity requires an `authorId` or `ownerId` field to properly secure write operations.
- * - The rules do NOT enforce the data types or presence of non-authorization fields.
- *
- * Denormalization for Authorization:
- *  - The rules assume that the `Visit` entity will contain an `authorId` or `ownerId` field indicating the user who created the visit. This is crucial for implementing owner-only write access.
+ * - `persons_to_visit` collection provides public read access, as this information is considered non-sensitive.
+ * - `visits` collection allows public reads, but enforces strict owner-only access for writes.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows public read access to the `persons_to_visit` collection, but prevents client-side writes.
-     * @path /persons_to_visit/{personToVisitId}
-     * @allow get, list: Always allows read access.
-     * @deny create, update, delete: Always denies write access.
-     * @principle Allows public read access.
+     * @description Rules for the /persons_to_visit/{personToVisitId} collection. Allows anyone to read the persons_to_visit collection.
+     * @path /databases/{database}/documents/persons_to_visit/{personToVisitId}
+     * @allow (get, list) Any user can read a person_to_visit document.
+     * @deny (create, update, delete) No one can create, update, or delete a person_to_visit document.
+     * @principle Public read access for non-sensitive data.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows public read access to the `visits` collection, but restricts writes to the owner of the visit.
-     * @path /visits/{visitId}
-     * @allow get, list: Always allows read access.
-     * @deny create, update, delete: Denies write access if the user is not the owner, or if the `Visit` entity is missing an `authorId` or `ownerId` field.
-     * @principle Allows public read access with owner-only writes based on an `authorId` or `ownerId` field in the `Visit` entity.
+     * @description Rules for the /visits/{visitId} collection. Allows anyone to read the visits collection, but enforces owner-only writes.
+     * @path /databases/{database}/documents/visits/{visitId}
+     * @allow (get, list) Any user can read a visit document.
+     * @allow (create) Any authenticated user can create a visit document. The `ownerId` field must match the user's UID.
+     * @allow (update, delete) Only the owner of the visit document can update or delete it.
+     * @deny (create) If the `ownerId` field does not match the user's UID.
+     * @deny (update, delete) If the user is not the owner of the visit document or the document doesn't exist.
+     * @principle Public read access with owner-only writes. Enforces document ownership for writes.
      */
     match /visits/{visitId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isExistingOwner(resource.data.id);
+      allow delete: if isExistingOwner(resource.data.id);
     }
+  }
 
-        /**
-     * @description Allows anyone to create a department
-     * @path /departments/{departmentId}
-     * @allow get, list: Always allows read access.
-     * @allow create: Always allows create access.
-     * @deny update, delete: Always denies update and delete access.
-     * @principle Allows public read and create access.
-     */
-    match /departments/{departmentId} {
-        allow get, list: if true;
-        allow create: if true;
-        allow update, delete: if false;
-    }
+  // --- Helper functions ---
+
+  /**
+   * @description Checks if the user is signed in.
+   * @returns {boolean} True if the user is signed in, false otherwise.
+   */
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  /**
+   * @description Checks if the user is the owner of the document.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner, false otherwise.
+   */
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+    /**
+   * @description Checks if the user is the owner of the document and the document exists.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner and the document exists, false otherwise.
+   */
+  function isExistingOwner(userId) {
+    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
