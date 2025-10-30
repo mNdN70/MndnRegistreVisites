@@ -52,7 +52,10 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const db = useFirestore();
 
   const fetchVisits = useCallback(async () => {
-    setLoading(true);
+    // Only set loading to true if there are no visits loaded yet
+    if(visits.length === 0) {
+      setLoading(true);
+    }
     try {
       const q = query(collection(db, VISITS_COLLECTION), orderBy('entryTime', 'desc'));
       const querySnapshot = await getDocs(q).catch(async (serverError) => {
@@ -81,7 +84,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [toast, db]);
+  }, [toast, db, visits.length]);
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     try {

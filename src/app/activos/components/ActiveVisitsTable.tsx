@@ -14,11 +14,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
 import { es, ca, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/use-translation";
+import { useEffect } from "react";
 
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
 
 export default function ActiveVisitsTable() {
-  const { getActiveVisits, loading } = useVisits();
+  const { getActiveVisits, loading, fetchVisits } = useVisits();
+  
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
+
   const activeVisits = getActiveVisits();
   const { t, language } = useTranslation();
 
