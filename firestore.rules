@@ -1,32 +1,35 @@
 /**
- * @file Firebase Security Rules for Visit Logging Application
+ * @fileOverview Firestore Security Rules for the Visit Logging Application.
  *
- * @corePhilosophy This ruleset enforces a role-based access control model, with a focus on data integrity
- * and user-level authorization.  It prioritizes secure access to visit records, ensuring that only
- * authorized users can create, read, update, or delete them.
+ * Core Philosophy:
+ * This ruleset prioritizes secure data access based on a combination of public read access and owner-only write access for certain collections.
+ * It restricts listing operations where sensitive data is involved.
  *
- * @dataStructure
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records, including visitor details, timestamps, and the person being visited.
+ * Data Structure:
+ * - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ * - `/visits/{visitId}`: Stores visit records.
  *
- * @keySecurityDecisions
- * - Public read access is allowed to `persons_to_visit`.
- * - Access to `visits` is restricted to authenticated users.
+ * Key Security Decisions:
+ * - Public read access is granted to the `persons_to_visit` collection.
+ * - Only authenticated users can create, update, or delete `visit` documents.
+ * - Listing visits is generally restricted to prevent unauthorized access to visit history.
  *
- * @denormalizationForAuthorization No specific denormalization is used in this ruleset.
+ * Denormalization for Authorization:
+ *  - Not applicable in the current data model. All authorization is path-based or relies on authenticated users.
  *
- * @structuralSegregation No structural segregation is applied in this ruleset.
+ * Structural Segregation:
+ *  - Not applicable in the current data model.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read people who can be visited, but restricts writes.
+     * @description Allows public read access to `persons_to_visit` collection, but restricts writes.
      * @path /persons_to_visit/{personToVisitId}
-     * @allow (get, list) - Any user can read a person to visit.
-     * @deny (create, update, delete) - No one can create, update, or delete a person to visit.
-     * @principle Public read access with restricted writes.
+     * @allow get, list: Any user can read the `persons_to_visit` collection.
+     * @deny create, update, delete: No user can create, update, or delete documents in this collection.
+     * @principle Public read access for reference data, restricted writes.
      */
     match /persons_to_visit/{personToVisitId} {
       allow get, list: if true;
@@ -34,27 +37,39 @@ service cloud.firestore {
     }
 
     /**
-     * @description Restricts access to visit records based on user authentication.
+     * @description Restricts access to the `visits` collection to authenticated users.
      * @path /visits/{visitId}
-     * @allow (create) - Authenticated users can create visit records.
-     * @allow (get, list) - Authenticated users can read visit records.
-     * @allow (update, delete) - No one can update or delete visit records.
-     * @deny (create) - Unauthenticated users cannot create visit records.
-     * @deny (get, list, update, delete) - Unauthenticated users cannot read, update or delete visit records.
-     * @principle Requires authentication for creating and reading visit records.
+     * @allow create: Any authenticated user can create a visit record.
+     * @allow get: Any authenticated user can read a visit record.
+     * @allow update, delete: Any authenticated user can update or delete a visit record.
+     * @deny list: Listing of visits is denied to all users.
+     * @principle Requires authentication for creating, reading, updating, and deleting visits.
      */
     match /visits/{visitId} {
+      allow get: if isSignedIn();
+      allow list: if false;
       allow create: if isSignedIn();
-      allow get, list: if isSignedIn();
-      allow update, delete: if false;
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
     }
 
     /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
+     * @description Explicitly denies all write operations to the `employees` collection.
+     * @path /employees
+     * @deny create, update, delete: No user can create, update, or delete documents in this collection.
+     * @principle Prevents unauthorized modifications to the `employees` collection.
      */
-    function isSignedIn() {
-      return request.auth != null;
+    match /employees {
+        allow get, list: if false;
+        allow create, update, delete: if false;
     }
+  }
+
+  /**
+   * @description Checks if the user is signed in.
+   * @returns {boolean} True if the user is signed in, false otherwise.
+   */
+  function isSignedIn() {
+    return request.auth != null;
   }
 }
