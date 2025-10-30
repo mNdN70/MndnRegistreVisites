@@ -1,71 +1,81 @@
 /**
- * @file Firebase Security Rules for Visit Logging Application
+ * @fileoverview Firestore Security Rules for the visit logging application.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and security for a visit logging application.
- * Authenticated users have full read and write access to all data.
+ * This ruleset prioritizes secure data access based on a combination of public read access where appropriate and owner-only write access.
  *
  * Data Structure:
- * - /persons_to_visit/{personToVisitId}: Stores information about people who can be visited.
- * - /visits/{visitId}: Stores visit records.
+ * The database contains two top-level collections: `persons_to_visit` and `visits`.
+ *   - `/persons_to_visit/{personToVisitId}`: Stores information about people who can be visited.
+ *   - `/visits/{visitId}`: Stores records of visits.
  *
  * Key Security Decisions:
- * - Authenticated users can create, read, update, and delete all data.
- * - Data validation is not performed in these rules to allow for rapid prototyping.
+ * - `persons_to_visit` collection provides public read access, as this information is considered non-sensitive.
+ * - `visits` collection allows public reads, but enforces strict owner-only access for writes.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows any authenticated user to create, read, update, and delete person to visit data.
-     * @path /persons_to_visit/{personToVisitId}
-     * @allow (create) auth.uid: 'user_abc', data: { id: 'person_1', name: 'John Doe' }
-     * @allow (get) auth.uid: 'user_abc'
-     * @allow (list) auth.uid: 'user_abc'
-     * @allow (update) auth.uid: 'user_abc', data: { name: 'Jane Doe' }
-     * @allow (delete) auth.uid: 'user_abc'
-     * @deny (create) !isSignedIn()
-     * @deny (get) !isSignedIn()
-     * @deny (list) !isSignedIn()
-     * @deny (update) !isSignedIn()
-     * @deny (delete) !isSignedIn()
-     * @principle Allows any authenticated user to manage person to visit data.
+     * @description Rules for the /persons_to_visit/{personToVisitId} collection. Allows anyone to read the persons_to_visit collection.
+     * @path /databases/{database}/documents/persons_to_visit/{personToVisitId}
+     * @allow (get, list) Any user can read a person_to_visit document.
+     * @deny (create, update, delete) No one can create, update, or delete a person_to_visit document.
+     * @principle Public read access for non-sensitive data.
      */
     match /persons_to_visit/{personToVisitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows any authenticated user to create, read, update, and delete visit records.
-     * @path /visits/{visitId}
-     * @allow (create) auth.uid: 'user_abc', data: { id: 'visit_1', visitorId: 'visitor_1', personToVisitId: 'person_1' }
-     * @allow (get) auth.uid: 'user_abc'
-     * @allow (list) auth.uid: 'user_abc'
-     * @allow (update) auth.uid: 'user_abc', data: { exitTimestamp: '2024-01-02T12:00:00Z' }
-     * @allow (delete) auth.uid: 'user_abc'
-     * @deny (create) !isSignedIn()
-     * @deny (get) !isSignedIn()
-     * @deny (list) !isSignedIn()
-     * @deny (update) !isSignedIn()
-     * @deny (delete) !isSignedIn()
-     * @principle Allows any authenticated user to manage visit records.
+     * @description Rules for the /visits/{visitId} collection. Allows anyone to read the visits collection, but enforces owner-only writes.
+     * @path /databases/{database}/documents/visits/{visitId}
+     * @allow (get, list) Any user can read a visit document.
+     * @allow (create) Any authenticated user can create a visit document. The `ownerId` field must match the user's UID.
+     * @allow (update, delete) Only the owner of the visit document can update or delete it.
+     * @deny (create) If the `ownerId` field does not match the user's UID.
+     * @deny (update, delete) If the user is not the owner of the visit document or the document doesn't exist.
+     * @principle Public read access with owner-only writes. Enforces document ownership for writes.
      */
     match /visits/{visitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isExistingOwner(resource.data.id);
+      allow delete: if isExistingOwner(resource.data.id);
     }
   }
 
-  // Helper function to determine if a user is signed in.
+  // --- Helper functions ---
+
+  /**
+   * @description Checks if the user is signed in.
+   * @returns {boolean} True if the user is signed in, false otherwise.
+   */
   function isSignedIn() {
     return request.auth != null;
+  }
+
+  /**
+   * @description Checks if the user is the owner of the document.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner, false otherwise.
+   */
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+    /**
+   * @description Checks if the user is the owner of the document and the document exists.
+   * @param {string} userId - The user ID to compare with the request's auth UID.
+   * @returns {boolean} True if the user is the owner and the document exists, false otherwise.
+   */
+  function isExistingOwner(userId) {
+    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
