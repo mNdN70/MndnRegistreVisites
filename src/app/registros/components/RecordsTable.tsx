@@ -48,7 +48,7 @@ export default function RecordsTable() {
     if (date?.from) {
       if (date.to) {
         if (isToday(date.from) && isToday(date.to)) {
-          return t('today_date_label', 'Hoy');
+          return t('today_date_label');
         }
         return (
           <>
@@ -58,7 +58,7 @@ export default function RecordsTable() {
         );
       }
       if (isToday(date.from)) {
-        return t('today_date_label', 'Hoy');
+        return t('today_date_label');
       }
       return format(date.from, "LLL dd, y", { locale: locales[language] });
     }
