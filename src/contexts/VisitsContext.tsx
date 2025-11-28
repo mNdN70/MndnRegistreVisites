@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -40,6 +40,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     to: endOfDay(new Date())
   });
   const db = useFirestore();
+  const { user } = useUser();
 
   const fetchVisits = useCallback(() => {
     setLoading(true);
@@ -63,22 +64,34 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   }, [db]);
 
   useEffect(() => {
-    const unsubscribe = fetchVisits();
-    return () => unsubscribe();
-  }, [fetchVisits]);
+    if (user) {
+        const unsubscribe = fetchVisits();
+        return () => unsubscribe();
+    } else {
+        setVisits([]);
+        setLoading(false);
+    }
+  }, [user, fetchVisits]);
 
   const addVisit = async (visit: Omit<AnyVisit, 'entryTime' | 'exitTime' | 'docId'>): Promise<{ success: boolean; message?: string }> => {
     const upperCaseId = visit.id.toUpperCase();
     
-    const activeVisitQuery = query(
-      collection(db, VISITS_COLLECTION),
-      where('id', '==', upperCaseId),
-      where('exitTime', '==', null)
+    const q = query(
+        collection(db, VISITS_COLLECTION),
+        where('id', '==', upperCaseId),
+        where('exitTime', '==', null)
     );
-    
-    const activeVisitSnapshot = await getDocs(activeVisitQuery);
 
-    if (!activeVisitSnapshot.empty) {
+    let activeVisitSnapshot;
+    try {
+        activeVisitSnapshot = await getDocs(q);
+    } catch (e) {
+        // This might fail if list access is denied for unauthenticated users, 
+        // but create should still work. We will proceed and let the addDoc handle it.
+    }
+
+
+    if (activeVisitSnapshot && !activeVisitSnapshot.empty) {
       const errorMessage = t('duplicate_entry_detail');
       toast({
         title: t('duplicate_entry'),
@@ -133,6 +146,11 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
             requestResourceData: newVisit,
         });
         errorEmitter.emit('permission-error', permissionError);
+        toast({
+          title: t('exit_registration_error'),
+          description: t('no_active_visit_today'),
+          variant: 'destructive',
+        });
         return { success: false, message: 'Permission error' };
       }
   };
@@ -166,7 +184,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.id);
       const updateData = { exitTime: new Date().toISOString() };
       
-      await updateDoc(visitDocRef, updateData).catch(async (serverError) => {
+      updateDoc(visitDocRef, updateData).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: visitDocRef.path,
             operation: 'update',
@@ -287,3 +305,5 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
+
+    

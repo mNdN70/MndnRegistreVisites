@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, createContext, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs, setDoc, query, where } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -45,6 +45,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const db = useFirestore();
+  const { user } = useUser();
 
   const fetchConfig = useCallback(async () => {
     setLoading(true);
@@ -80,11 +81,19 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         unsubscribeDepartments();
         unsubscribeEmployees();
     };
-  }, [db, t, toast]);
+  }, [db]);
 
   useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    // We only fetch the full config if the user is logged in
+    // Public parts of the app can use this context, but employees/depts will be empty
+    if (user) {
+        fetchConfig();
+    } else {
+        setDepartments([]);
+        setEmployees([]);
+        setLoading(false);
+    }
+  }, [user, fetchConfig]);
 
   const addDepartment = useCallback(async (department: string) => {
     if (departments.map(d => d.toLowerCase()).includes(department.toLowerCase())) {
