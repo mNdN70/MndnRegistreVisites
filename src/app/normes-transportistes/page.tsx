@@ -14,7 +14,7 @@ function SafetyNormsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isChecked, setIsChecked] = useState(false);
-  const entryType = searchParams.get('type') || 'general';
+  const entryType = searchParams.get('type') || 'transporter';
   const { t } = useTranslation();
 
   const handleContinue = () => {
@@ -29,7 +29,7 @@ function SafetyNormsContent() {
       <Card className="w-full max-w-4xl shadow-xl bg-white">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-               <Image src="https://www.menadiona.com/wp-content/uploads/2020/05/logo-menadiona.png" alt="MENADIONA Logo" width={100} height={50} />
+               <Image src="https://www.menadiona.com/wp-content/uploads/2020/05/logo-menadiona.png" alt="MENADIONA Logo" width={200} height={100} />
             </div>
           <CardTitle className="font-headline text-2xl md:text-3xl">{t('transporter_safety_norms_title')}</CardTitle>
         </CardHeader>
