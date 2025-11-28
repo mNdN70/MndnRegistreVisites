@@ -51,13 +51,16 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching visits: ", error);
-        toast({ title: "Error", description: "Could not fetch visits.", variant: "destructive" });
+        const permissionError = new FirestorePermissionError({
+          path: VISITS_COLLECTION,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
         setLoading(false);
       }
     );
     return unsubscribe;
-  }, [db, toast]);
+  }, [db]);
 
   useEffect(() => {
     const unsubscribe = fetchVisits();
@@ -163,7 +166,14 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.id);
       const updateData = { exitTime: new Date().toISOString() };
       
-      await updateDoc(visitDocRef, updateData)
+      await updateDoc(visitDocRef, updateData).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: visitDocRef.path,
+            operation: 'update',
+            requestResourceData: updateData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
       
       toast({
         title: t('exit_registered'),
