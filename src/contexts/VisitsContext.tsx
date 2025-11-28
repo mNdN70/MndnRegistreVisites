@@ -6,9 +6,9 @@ import { useState, useEffect, useCallback, createContext, ReactNode } from 'reac
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
 import { DateRange } from 'react-day-picker';
-import { isWithinInterval, startOfDay, endOfDay, isToday } from 'date-fns';
+import { isWithinInterval, startOfDay, endOfDay, isToday, isBefore } from 'date-fns';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, onSnapshot, writeBatch } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -42,6 +42,32 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const db = useFirestore();
   const { user } = useUser();
 
+  const handleAutoExit = useCallback(async (visitsData: AnyVisit[]) => {
+    const today = startOfDay(new Date());
+    const visitsToAutoExit = visitsData.filter(visit => 
+        visit.exitTime === null && isBefore(new Date(visit.entryTime), today) && !visit.autoExit
+    );
+
+    if (visitsToAutoExit.length > 0) {
+      const batch = writeBatch(db);
+      visitsToAutoExit.forEach(visit => {
+        if (visit.docId) {
+            const visitRef = doc(db, VISITS_COLLECTION, visit.docId);
+            batch.update(visitRef, { exitTime: new Date(new Date(visit.entryTime).setHours(23, 59, 59, 999)).toISOString(), autoExit: true });
+        }
+      });
+
+      await batch.commit().catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: VISITS_COLLECTION,
+            operation: 'update',
+            requestResourceData: { autoExit: true },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+    }
+  }, [db]);
+
   const fetchVisits = useCallback(() => {
     setLoading(true);
     const visitsCollection = collection(db, VISITS_COLLECTION);
@@ -49,6 +75,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       (snapshot) => {
         const visitsData = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as AnyVisit));
         setVisits(visitsData);
+        handleAutoExit(visitsData);
         setLoading(false);
       },
       (error) => {
@@ -61,7 +88,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       }
     );
     return unsubscribe;
-  }, [db]);
+  }, [db, handleAutoExit]);
 
   useEffect(() => {
     if (user) {
@@ -184,7 +211,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
       const visitDocRef = doc(db, VISITS_COLLECTION, latestVisitDoc.id);
       const updateData = { exitTime: new Date().toISOString() };
       
-      updateDoc(visitDocRef, updateData).catch(async (serverError) => {
+      await updateDoc(visitDocRef, updateData).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: visitDocRef.path,
             operation: 'update',
@@ -305,5 +332,3 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     </VisitsContext.Provider>
   );
 };
-
-    
