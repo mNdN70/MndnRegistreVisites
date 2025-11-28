@@ -30,13 +30,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'www.safetysigns.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'as1.ftcdn.net',
+        hostname: 'vectorlogo.zone',
         port: '',
         pathname: '/**',
       }

@@ -29,7 +29,7 @@ function SafetyNormsContent() {
       <Card className="w-full max-w-4xl shadow-xl bg-white">
         <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-               <Image src="/images/logo-menadiona.svg" alt="MENADIONA Logo" width={200} height={100} />
+               <Image src="/images/logo.png" alt="MENADIONA Logo" width={200} height={100} />
             </div>
           <CardTitle className="font-headline text-2xl md:text-3xl">{t('safety_norms_title')}</CardTitle>
         </CardHeader>
@@ -43,11 +43,11 @@ function SafetyNormsContent() {
             <li>{t('safety_norm_6')}</li>
             <li>{t('safety_norm_7')}</li>
             <div className="flex justify-center my-4">
-                <Image src="https://www.safetysigns.com/media/catalog/product/cache/1/image/600x/9df78eab33525d08d6e5fb8d27136e95/a/s/assembly-point-sign-k2-0050_2.png" alt="Punt de Trobada" width={200} height={113} data-ai-hint="assembly point" />
+                <Image src="/images/punt_reunio.png" alt="Punt de Trobada" width={200} height={113} data-ai-hint="assembly point" />
             </div>
             <li>{t('safety_norm_8')}</li>
              <div className="flex justify-center my-4">
-                <Image src="https://as1.ftcdn.net/v2/jpg/01/21/53/38/1000_F_121533815_iRsoxV2if3I2S58h42JkHr5Yx3pGr26c.jpg" alt="Cámaras de seguridad" width={100} height={55} data-ai-hint="cctv camera" />
+                <Image src="/images/camaras.png" alt="Cámaras de seguridad" width={100} height={55} data-ai-hint="cctv camera" />
             </div>
           </ul>
         </CardContent>
