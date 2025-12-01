@@ -23,8 +23,9 @@ interface VisitsContextType {
     registerExit: (dni: string) => Promise<{ success: boolean; message?: string }>;
     getActiveVisits: () => AnyVisit[];
     getFilteredVisits: () => AnyVisit[];
-    exportToCSV: (filename: string, recipients: string[]) => void;
+    exportToCSV: (filename: string) => void;
     getActiveVisitsCSV: () => string | null;
+    getFilteredVisitsCSV: () => string | null;
     fetchVisits: () => void;
 }
 
@@ -296,7 +297,7 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
   
-  const exportToCSV = useCallback((filename: string, recipients: string[]) => {
+  const exportToCSV = useCallback((filename: string) => {
     const data = getFilteredVisits();
     const csvContent = createCSVContent(data, t);
     
@@ -315,10 +316,6 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     link.click();
     document.body.removeChild(link);
 
-    if (recipients.length > 0) {
-        // Logic to send email is now handled in the component
-    }
-
     toast({ title: t('export_completed') });
   }, [getFilteredVisits, t, toast]);
 
@@ -326,9 +323,14 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     const activeVisits = getActiveVisits();
     return createCSVContent(activeVisits, t);
   }, [getActiveVisits, t]);
+  
+  const getFilteredVisitsCSV = useCallback(() => {
+    const filteredVisits = getFilteredVisits();
+    return createCSVContent(filteredVisits, t);
+  }, [getFilteredVisits, t]);
 
   return (
-    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, getActiveVisitsCSV, fetchVisits }}>
+    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, getActiveVisitsCSV, getFilteredVisitsCSV, fetchVisits }}>
       {children}
     </VisitsContext.Provider>
   );
