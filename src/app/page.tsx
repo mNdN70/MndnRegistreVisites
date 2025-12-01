@@ -32,17 +32,17 @@ export default function Home() {
     {
       href: "/normes-seguretat?type=general",
       titleKey: "entry",
-      icon: <User className="h-16 w-16" />,
+      icon: <User className="h-12 w-12" />,
     },
     {
       href: "/normes-transportistes",
       titleKey: "transporter_entry",
-      icon: <Truck className="h-16 w-16" />,
+      icon: <Truck className="h-12 w-12" />,
     },
     {
       href: "/salida",
       titleKey: "exit",
-      icon: <LogOut className="h-16 w-16" />,
+      icon: <LogOut className="h-12 w-12" />,
     },
   ];
 
@@ -65,11 +65,11 @@ export default function Home() {
         {translatedActionCards.map((card) => (
           <Link href={card.href} key={card.href}>
             <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl bg-white">
-              <CardHeader className="flex flex-col items-center justify-center text-center p-8 min-h-[200px]">
+              <CardHeader className="flex flex-col items-center justify-center text-center p-6 min-h-[160px]">
                 <div className="mb-4 text-primary group-hover:text-accent transition-colors duration-300">
                   {card.icon}
                 </div>
-                <CardTitle className="font-headline text-4xl mb-2">{card.title}</CardTitle>
+                <CardTitle className="font-headline text-3xl mb-2">{card.title}</CardTitle>
               </CardHeader>
             </Card>
           </Link>
