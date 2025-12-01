@@ -32,7 +32,6 @@ export default function Home() {
     {
       href: "/normes-seguretat?type=general",
       titleKey: "entry",
-      descriptionKey: "general_entry_description",
       icon: <User className="h-16 w-16" />,
     },
     {
@@ -53,7 +52,7 @@ export default function Home() {
     .map(card => ({
         ...card,
         title: t(card.titleKey),
-        description: t(card.descriptionKey),
+        description: card.descriptionKey ? t(card.descriptionKey) : '',
     }))
     .filter(card => card.title);
 
