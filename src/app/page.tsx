@@ -33,19 +33,19 @@ export default function Home() {
       href: "/normes-seguretat?type=general",
       titleKey: "entry",
       descriptionKey: "general_entry_description",
-      icon: <User className="h-12 w-12" />,
+      icon: <User className="h-16 w-16" />,
     },
     {
       href: "/normes-transportistes",
       titleKey: "transporter_entry",
       descriptionKey: "transporter_entry_description",
-      icon: <Truck className="h-12 w-12" />,
+      icon: <Truck className="h-16 w-16" />,
     },
     {
       href: "/salida",
       titleKey: "exit",
       descriptionKey: "exit_description",
-      icon: <LogOut className="h-12 w-12" />,
+      icon: <LogOut className="h-16 w-16" />,
     },
   ];
 
@@ -60,21 +60,21 @@ export default function Home() {
   return (
     <PageContainer>
       <div className="text-center mb-12">
-        <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
+        <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight">
           {t('welcome_to_menadiona')}
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-8">
         {translatedActionCards.map((card) => (
           <Link href={card.href} key={card.href}>
             <Card className="h-full group hover:border-primary transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl bg-white">
-              <CardHeader className="flex flex-col items-center justify-center text-center p-8">
+              <CardHeader className="flex flex-col items-center justify-center text-center p-8 min-h-[200px]">
                 <div className="mb-4 text-primary group-hover:text-accent transition-colors duration-300">
                   {card.icon}
                 </div>
-                <CardTitle className="font-headline text-3xl mb-2">{card.title}</CardTitle>
-                <CardDescription className="text-base">
+                <CardTitle className="font-headline text-4xl mb-2">{card.title}</CardTitle>
+                <CardDescription className="text-lg">
                   {card.description}
                 </CardDescription>
               </CardHeader>
@@ -84,20 +84,20 @@ export default function Home() {
       </div>
       <div className="text-center mt-12">
         {currentDate ? (
-            <p className="text-2xl font-body text-foreground">
+            <p className="text-3xl font-body text-foreground">
                 {currentDate}
             </p>
         ) : (
-            <p className="text-2xl font-body text-muted-foreground animate-pulse">
+            <p className="text-3xl font-body text-muted-foreground animate-pulse">
                 &nbsp;
             </p>
         )}
         {currentTime ? (
-          <p className="text-[3.5rem] font-body tracking-widest text-foreground">
+          <p className="text-[5rem] font-body tracking-widest text-foreground">
             {currentTime}
           </p>
         ) : (
-          <p className="text-[3.5rem] font-body tracking-widest text-muted-foreground animate-pulse">
+          <p className="text-[5rem] font-body tracking-widest text-muted-foreground animate-pulse">
             00:00:00
           </p>
         )}
