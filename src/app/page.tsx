@@ -37,13 +37,11 @@ export default function Home() {
     {
       href: "/normes-transportistes",
       titleKey: "transporter_entry",
-      descriptionKey: "transporter_entry_description",
       icon: <Truck className="h-16 w-16" />,
     },
     {
       href: "/salida",
       titleKey: "exit",
-      descriptionKey: "exit_description",
       icon: <LogOut className="h-16 w-16" />,
     },
   ];
@@ -52,7 +50,6 @@ export default function Home() {
     .map(card => ({
         ...card,
         title: t(card.titleKey),
-        description: card.descriptionKey ? t(card.descriptionKey) : '',
     }))
     .filter(card => card.title);
 
@@ -73,9 +70,6 @@ export default function Home() {
                   {card.icon}
                 </div>
                 <CardTitle className="font-headline text-4xl mb-2">{card.title}</CardTitle>
-                <CardDescription className="text-lg">
-                  {card.description}
-                </CardDescription>
               </CardHeader>
             </Card>
           </Link>
