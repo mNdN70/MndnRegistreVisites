@@ -1,4 +1,4 @@
-Error: useVisits must be used within a VisitsProvider# Firebase Studio
+gitError: useVisits must be used within a VisitsProvider# Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
 
