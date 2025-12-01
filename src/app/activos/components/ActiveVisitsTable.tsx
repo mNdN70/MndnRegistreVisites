@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow } from "date-fns";
 import { es, ca, enUS } from "date-fns/locale";
-import { useTranslation } from "@/hooks/use-translation";
 import { useContext, useEffect } from "react";
 
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
@@ -32,7 +31,6 @@ export default function ActiveVisitsTable() {
   }, [fetchVisits]);
 
   const activeVisits = getActiveVisits();
-  const { t, language } = useTranslation();
 
   if (loading) {
     return (
@@ -48,18 +46,18 @@ export default function ActiveVisitsTable() {
     <div>
       {activeVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">{t('no_active_visits')}</p>
+          <p className="text-lg">No hi ha visites actives en aquest moment.</p>
         </div>
       ) : (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('name')}</TableHead>
+                <TableHead>Nom</TableHead>
                 <TableHead>DNI/NIE</TableHead>
-                <TableHead className="hidden md:table-cell">{t('company')}</TableHead>
-                <TableHead>{t('entry_time')}</TableHead>
-                <TableHead className="hidden sm:table-cell">{t('visiting')}</TableHead>
+                <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                <TableHead>Hora d'Entrada</TableHead>
+                <TableHead className="hidden sm:table-cell">Visita a</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -69,9 +67,9 @@ export default function ActiveVisitsTable() {
                   <TableCell>{visit.id}</TableCell>
                   <TableCell className="hidden md:table-cell">{visit.company}</TableCell>
                   <TableCell>
-                    <div>{format(new Date(visit.entryTime), "p", { locale: locales[language] })}</div>
+                    <div>{format(new Date(visit.entryTime), "p", { locale: ca })}</div>
                     <div className="text-xs text-muted-foreground">
-                      ({t('ago')} {formatDistanceToNow(new Date(visit.entryTime), { locale: locales[language] })})
+                      (fa {formatDistanceToNow(new Date(visit.entryTime), { locale: ca })})
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{visit.personToVisit}</TableCell>

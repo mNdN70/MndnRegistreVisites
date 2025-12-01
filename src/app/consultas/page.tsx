@@ -13,7 +13,6 @@ import { VisitsContext } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
 
 export default function ConsultasPage() {
-  const { t } = useTranslation();
   const router = useRouter();
   const visitsContext = useContext(VisitsContext);
   const { getReportRecipients } = useConfig();
@@ -57,25 +56,25 @@ export default function ConsultasPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
-                <CardTitle className="font-headline text-4xl">{t('active_visits_title')}</CardTitle>
+                <CardTitle className="font-headline text-4xl">Visites Actives</CardTitle>
                 <CardDescription>
-                  {t('active_visits_description')}
+                  Visitants que es troben actualment a les instal·lacions.
                 </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Link href="/registros" passHref>
                   <Button>
                     <BookOpen />
-                    {t('consult_records')}
+                    Consultar Registres
                   </Button>
                 </Link>
                 <Button onClick={handleExport}>
                     <Download />
-                    {t('export_to_csv')}
+                    Exportar a CSV
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut />
-                    {t('logout')}
+                    Sortir
                 </Button>
               </div>
           </div>

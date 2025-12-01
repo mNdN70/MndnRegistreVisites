@@ -18,7 +18,6 @@ import { es, ca, enUS } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/hooks/use-translation";
 import { useContext } from "react";
 
 const locales: { [key: string]: Locale } = { es, ca, en: enUS };
@@ -38,7 +37,6 @@ export default function RecordsTable() {
   } = context;
 
   const filteredVisits = getFilteredVisits();
-  const { t, language } = useTranslation();
 
   if (loading) {
     return (
@@ -55,21 +53,21 @@ export default function RecordsTable() {
     if (date?.from) {
       if (date.to) {
         if (isToday(date.from) && date.from.getTime() === date.to.getTime()) {
-          return t('today_date_label');
+          return "Avui";
         }
         return (
           <>
-            {format(date.from, "LLL dd, y", { locale: locales[language] })} -{" "}
-            {format(date.to, "LLL dd, y", { locale: locales[language] })}
+            {format(date.from, "LLL dd, y", { locale: ca })} -{" "}
+            {format(date.to, "LLL dd, y", { locale: ca })}
           </>
         );
       }
       if (isToday(date.from)) {
-        return t('today_date_label');
+        return "Avui";
       }
-      return format(date.from, "LLL dd, y", { locale: locales[language] });
+      return format(date.from, "LLL dd, y", { locale: ca });
     }
-    return <span>{t('select_range')}</span>;
+    return <span>Seleccioneu un rang</span>;
   };
 
 
@@ -98,27 +96,27 @@ export default function RecordsTable() {
               selected={date}
               onSelect={setDate}
               numberOfMonths={2}
-              locale={locales[language]}
+              locale={ca}
             />
           </PopoverContent>
         </Popover>
       </div>
       {filteredVisits.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">{t('no_records_in_range')}</p>
+          <p className="text-lg">No hi ha registres de visites en el rang seleccionat.</p>
         </div>
       ) : (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('name')}</TableHead>
+                <TableHead>Nom</TableHead>
                 <TableHead className="hidden lg:table-cell">DNI/NIE</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('company')}</TableHead>
-                <TableHead>{t('entry_time')}</TableHead>
-                <TableHead>{t('exit_time')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('visiting')}</TableHead>
-                <TableHead>{t('status')}</TableHead>
+                <TableHead className="hidden lg:table-cell">Empresa</TableHead>
+                <TableHead>Hora d'Entrada</TableHead>
+                <TableHead>Hora de Sortida</TableHead>
+                <TableHead className="hidden md:table-cell">Visita a</TableHead>
+                <TableHead>Estat</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -127,20 +125,20 @@ export default function RecordsTable() {
                   <TableCell className="font-medium">{visit.name}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{visit.id}</TableCell>
                   <TableCell className="hidden lg:table-cell">{visit.company}</TableCell>
-                  <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: locales[language] })}</TableCell>
+                  <TableCell>{format(new Date(visit.entryTime), "Pp", { locale: ca })}</TableCell>
                   <TableCell>
                     {visit.exitTime
-                      ? format(new Date(visit.exitTime), "Pp", { locale: locales[language] })
+                      ? format(new Date(visit.exitTime), "Pp", { locale: ca })
                       : "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{visit.personToVisit}</TableCell>
                   <TableCell>
                     {visit.autoExit ? (
-                        <Badge variant="destructive">{t('auto_exit')}</Badge>
+                        <Badge variant="destructive">Sortida automàtica</Badge>
                     ) : visit.exitTime ? (
-                      <Badge variant="outline">{t('finished')}</Badge>
+                      <Badge variant="outline">Finalitzada</Badge>
                     ) : (
-                      <Badge variant="default" className="bg-primary">{t('active')}</Badge>
+                      <Badge variant="default" className="bg-primary">Activa</Badge>
                     )}
                   </TableCell>
                 </TableRow>
