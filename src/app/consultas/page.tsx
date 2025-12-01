@@ -6,16 +6,19 @@ import ActiveVisitsTable from "@/app/activos/components/ActiveVisitsTable";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, BookOpen, Download, Mail } from "lucide-react";
+import { LogOut, BookOpen, Download, Mail, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { VisitsContext } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ConsultasPage() {
   const router = useRouter();
   const visitsContext = useContext(VisitsContext);
   const { getReportRecipients } = useConfig();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,7 +34,7 @@ export default function ConsultasPage() {
   if (!visitsContext) {
     throw new Error("VisitsContext must be used within a VisitsProvider");
   }
-  const { exportActiveVisitsToCSV } = visitsContext;
+  const { getActiveVisitsCSV } = visitsContext;
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -41,13 +44,75 @@ export default function ConsultasPage() {
   };
   
   const handleExport = () => {
-    exportActiveVisitsToCSV();
+    const csvData = getActiveVisitsCSV();
+    if (!csvData) {
+        toast({ title: 'No hi ha dades per exportar', variant: 'destructive' });
+        return;
+    }
+    const blob = new Blob([`\uFEFF${csvData}`], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'registre_visites_actives.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Exportació completada' });
   }
   
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
+    setIsSending(true);
     const recipients = getReportRecipients();
-    exportActiveVisitsToCSV(recipients);
-  }
+    if (recipients.length === 0) {
+      toast({
+        title: 'No hi ha destinataris',
+        description: 'No hi ha empleats configurats per rebre informes.',
+        variant: 'destructive',
+      });
+      setIsSending(false);
+      return;
+    }
+
+    const csvData = getActiveVisitsCSV();
+    if (!csvData) {
+      toast({ title: 'No hi ha dades per enviar', variant: 'destructive' });
+      setIsSending(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/send-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          csvData,
+          recipients,
+          subject: 'Registre de visites actives',
+          fromName: 'Recepció',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('El servidor ha respost amb un error');
+      }
+
+      toast({
+        title: 'Correu enviat',
+        description: 'El registre de visites s\'ha enviat correctament.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error en enviar el correu',
+        description: 'No s\'ha pogut enviar el correu. Si us plau, torni a intentar-ho.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   if (!isAuthorized) {
     return null;
@@ -75,8 +140,8 @@ export default function ConsultasPage() {
                     <Download />
                     Exportar a CSV
                 </Button>
-                <Button onClick={handleSendEmail}>
-                    <Mail />
+                <Button onClick={handleSendEmail} disabled={isSending}>
+                    {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail />}
                     Enviar per correu
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>

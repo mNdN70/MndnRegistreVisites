@@ -24,11 +24,50 @@ interface VisitsContextType {
     getActiveVisits: () => AnyVisit[];
     getFilteredVisits: () => AnyVisit[];
     exportToCSV: (filename: string, recipients: string[]) => void;
-    exportActiveVisitsToCSV: (recipients: string[]) => void;
+    getActiveVisitsCSV: () => string | null;
     fetchVisits: () => void;
 }
 
 export const VisitsContext = createContext<VisitsContextType | undefined>(undefined);
+
+const createCSVContent = (data: AnyVisit[], t: (key: string) => string): string | null => {
+    if (data.length === 0) {
+      return null;
+    }
+
+    const headers = [
+      'DNI', 'NOMBRE Y APELLIDOS', 'EMPRESA', 'PERSONA A VISITAR', 'MATRICULA', 'REMOLQUE', 'EMPRESA DE TRANSPORTE', 'HORA ENTRADA', 'HORA SALIDA', 'ESTADO'
+    ];
+    
+    const rows = data.map(v => {
+      let status = t('active');
+      if (v.autoExit) {
+        status = t('auto_exit');
+      } else if (v.exitTime) {
+        status = t('finished');
+      }
+      
+      const isTransporter = v.type === 'transporter';
+
+      const rowData = [
+        v.id,
+        v.name,
+        v.company,
+        v.personToVisit,
+        isTransporter ? (v as TransporterVisit).licensePlate : '',
+        isTransporter ? (v as TransporterVisit).trailerLicensePlate || '' : '',
+        isTransporter ? (v as TransporterVisit).haulierCompany : '',
+        new Date(v.entryTime).toLocaleString(),
+        v.exitTime ? new Date(v.exitTime).toLocaleString() : '',
+        status
+      ];
+
+      return rowData.map(d => `"${String(d ?? '').replace(/"/g, '""')}"`).join(',');
+    });
+
+    return [headers.join(','), ...rows].join('\n');
+};
+
 
 export const VisitsProvider = ({ children }: { children: ReactNode }) => {
   const [visits, setVisits] = useState<AnyVisit[]>([]);
@@ -257,46 +296,15 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     }).sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime());
   }, [visits, date]);
   
-  const createCSV = useCallback((data: AnyVisit[], filename: string, recipients: string[] = []) => {
-    if (data.length === 0) {
-      toast({
-        title: t('no_data_to_export'),
-        variant: 'destructive'
-      });
-      return;
+  const exportToCSV = useCallback((filename: string, recipients: string[]) => {
+    const data = getFilteredVisits();
+    const csvContent = createCSVContent(data, t);
+    
+    if (!csvContent) {
+        toast({ title: t('no_data_to_export'), variant: 'destructive' });
+        return;
     }
 
-    const headers = [
-      'DNI', 'NOMBRE Y APELLIDOS', 'EMPRESA', 'PERSONA A VISITAR', 'MATRICULA', 'REMOLQUE', 'EMPRESA DE TRANSPORTE', 'HORA ENTRADA', 'HORA SALIDA', 'ESTADO'
-    ];
-    
-    const rows = data.map(v => {
-      let status = t('active');
-      if (v.autoExit) {
-        status = t('auto_exit');
-      } else if (v.exitTime) {
-        status = t('finished');
-      }
-      
-      const isTransporter = v.type === 'transporter';
-
-      const rowData = [
-        v.id,
-        v.name,
-        v.company,
-        v.personToVisit,
-        isTransporter ? (v as TransporterVisit).licensePlate : '',
-        isTransporter ? (v as TransporterVisit).trailerLicensePlate || '' : '',
-        isTransporter ? (v as TransporterVisit).haulierCompany : '',
-        new Date(v.entryTime).toLocaleString(),
-        v.exitTime ? new Date(v.exitTime).toLocaleString() : '',
-        status
-      ];
-
-      return rowData.map(d => `"${String(d).replace(/"/g, '""')}"`).join(',');
-    });
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -308,26 +316,19 @@ export const VisitsProvider = ({ children }: { children: ReactNode }) => {
     document.body.removeChild(link);
 
     if (recipients.length > 0) {
-        const to = recipients.join(',');
-        const subject = encodeURIComponent(`Exportación de Registros - ${filename}`);
-        const body = encodeURIComponent('Adjunte aquí el archivo CSV descargado.');
-        window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
+        // Logic to send email is now handled in the component
     }
 
     toast({ title: t('export_completed') });
-  }, [toast, t]);
+  }, [getFilteredVisits, t, toast]);
 
-  const exportToCSV = useCallback((filename: string, recipients: string[]) => {
-    const data = getFilteredVisits();
-    createCSV(data, filename, recipients);
-  }, [getFilteredVisits, createCSV]);
-
-  const exportActiveVisitsToCSV = useCallback((recipients: string[]) => {
-    createCSV(getActiveVisits(), 'registros_visitas_activas.csv', recipients);
-  }, [getActiveVisits, createCSV]);
+  const getActiveVisitsCSV = useCallback(() => {
+    const activeVisits = getActiveVisits();
+    return createCSVContent(activeVisits, t);
+  }, [getActiveVisits, t]);
 
   return (
-    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, exportActiveVisitsToCSV, fetchVisits }}>
+    <VisitsContext.Provider value={{ visits, loading, date, setDate, addVisit, registerExit, getActiveVisits, getFilteredVisits, exportToCSV, getActiveVisitsCSV, fetchVisits }}>
       {children}
     </VisitsContext.Provider>
   );
