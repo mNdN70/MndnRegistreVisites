@@ -3,11 +3,10 @@
 import { PageContainer } from "@/components/PageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ActiveVisitsTable from "@/app/activos/components/ActiveVisitsTable";
-import { useTranslation } from "@/hooks/use-translation";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, BookOpen, Download } from "lucide-react";
+import { LogOut, BookOpen, Download, Mail } from "lucide-react";
 import Link from "next/link";
 import { VisitsContext } from "@/contexts/VisitsContext";
 import { useConfig } from "@/hooks/use-config";
@@ -42,6 +41,10 @@ export default function ConsultasPage() {
   };
   
   const handleExport = () => {
+    exportActiveVisitsToCSV();
+  }
+  
+  const handleSendEmail = () => {
     const recipients = getReportRecipients();
     exportActiveVisitsToCSV(recipients);
   }
@@ -61,7 +64,7 @@ export default function ConsultasPage() {
                   Visitants que es troben actualment a les instal·lacions.
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-end">
                 <Link href="/registros" passHref>
                   <Button>
                     <BookOpen />
@@ -71,6 +74,10 @@ export default function ConsultasPage() {
                 <Button onClick={handleExport}>
                     <Download />
                     Exportar a CSV
+                </Button>
+                <Button onClick={handleSendEmail}>
+                    <Mail />
+                    Enviar per correu
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut />
